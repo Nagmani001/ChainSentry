@@ -1,0 +1,41 @@
+{
+  "name": "@repo/database",
+  "version": "0.1.0",
+  "description": "ChainSentry database layer: Postgres (Drizzle) + ClickHouse",
+  "type": "module",
+  "private": true,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./postgres": {
+      "types": "./dist/postgres/index.d.ts",
+      "import": "./dist/postgres/index.js"
+    },
+    "./clickhouse": {
+      "types": "./dist/clickhouse/index.d.ts",
+      "import": "./dist/clickhouse/index.js"
+    }
+  },
+  "scripts": {
+    "db:generate": "prisma generate",
+    "build": "prisma generate && tsc -p tsconfig.json && cp -r src/generated dist/generated",
+    "check-types": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@clickhouse/client": "^1.8.0",
+    "@prisma/adapter-pg": "^7.10.0",
+    "@prisma/client": "^7.10.0",
+    "@prisma/client-runtime-utils": "7.10.0"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "26.4.1",
+    "dotenv": "^17.4.2",
+    "prisma": "7.10.0",
+    "typescript": "7.0.2"
+  }
+}
