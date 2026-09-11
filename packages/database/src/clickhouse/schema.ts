@@ -2,6 +2,7 @@ import type { ClickHouseClient } from "./client.js";
 
 export const EVENTS_TABLE = "events";
 export const TRANSACTIONS_TABLE = "transactions";
+export const TRACES_TABLE = "traces";
 
 const EVENTS_DDL = `
 CREATE TABLE IF NOT EXISTS ${EVENTS_TABLE} (
@@ -46,6 +47,32 @@ PARTITION BY toYYYYMM(block_timestamp)
 ORDER BY (contract_address, block_number, tx_hash)
 `;
 
+const TRACES_DDL = `
+CREATE TABLE IF NOT EXISTS ${TRACES_TABLE} (
+  chain_id UInt32,
+  contract_address String,
+  block_number UInt64,
+  block_timestamp DateTime,
+  tx_hash String,
+  tx_index UInt32,
+  trace_address String,
+  depth UInt16,
+  call_type LowCardinality(String),
+  from_address String,
+  to_address String,
+  value String,
+  gas UInt64,
+  gas_used UInt64,
+  input String,
+  output String,
+  method_selector String,
+  error String,
+  ingested_at DateTime DEFAULT now()
+) ENGINE = ReplacingMergeTree(ingested_at)
+PARTITION BY toYYYYMM(block_timestamp)
+ORDER BY (contract_address, block_number, tx_hash, trace_address)
+`;
+
 export interface EventRow {
   chain_id: number;
   contract_address: string;
@@ -79,9 +106,31 @@ export interface TransactionRow {
   method_selector: string;
 }
 
+export interface TraceRow {
+  chain_id: number;
+  contract_address: string;
+  block_number: number;
+  block_timestamp: number;
+  tx_hash: string;
+  tx_index: number;
+  trace_address: string;
+  depth: number;
+  call_type: string;
+  from_address: string;
+  to_address: string;
+  value: string;
+  gas: number;
+  gas_used: number;
+  input: string;
+  output: string;
+  method_selector: string;
+  error: string;
+}
+
 export async function migrateClickHouse(client: ClickHouseClient): Promise<void> {
   await client.command({ query: EVENTS_DDL });
   await client.command({ query: TRANSACTIONS_DDL });
+  await client.command({ query: TRACES_DDL });
 }
 
 export async function insertEvents(
@@ -102,4 +151,12 @@ export async function insertTransactions(
     values: rows,
     format: "JSONEachRow",
   });
+}
+
+export async function insertTraces(
+  client: ClickHouseClient,
+  rows: TraceRow[],
+): Promise<void> {
+  if (rows.length === 0) return;
+  await client.insert({ table: TRACES_TABLE, values: rows, format: "JSONEachRow" });
 }
