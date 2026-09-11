@@ -2,31 +2,58 @@
 
 import { useState } from "react";
 import { api } from "../lib/api";
-import type { Panel, QueryResult, VizType } from "../lib/types";
+import type {
+  DashboardSection,
+  Panel,
+  QueryResult,
+  VizType,
+} from "../lib/types";
 import { PanelChart } from "./PanelChart";
 
-const VIZ_OPTIONS: VizType[] = ["line", "area", "bar", "stat", "pie", "table"];
+const VIZ_OPTIONS: VizType[] = [
+  "line",
+  "area",
+  "bar",
+  "stat",
+  "pie",
+  "table",
+  "logs",
+];
 
-const TEMPLATE = `SELECT event_name, count() AS count
+const METRICS_TEMPLATE = `SELECT event_name, count() AS count
 FROM events FINAL
 WHERE contract_address = {addr:String} AND chain_id = {chain:UInt32}
 GROUP BY event_name
 ORDER BY count DESC`;
 
+const LOGS_TEMPLATE = `SELECT block_timestamp, event_name, event_signature,
+       block_number, log_index, tx_hash, topic0, args, data
+FROM events FINAL
+WHERE contract_address = {addr:String} AND chain_id = {chain:UInt32}
+ORDER BY block_number DESC, log_index DESC
+LIMIT 200`;
+
 export function PaneBuilderModal({
   initial,
   params,
+  section,
   onClose,
   onSave,
 }: {
   initial: Panel | null;
   params: Record<string, unknown>;
+  section: DashboardSection;
   onClose: () => void;
   onSave: (panel: Panel) => void;
 }) {
+  const isLogs = section === "logs";
   const [title, setTitle] = useState(initial?.title ?? "New panel");
-  const [viz, setViz] = useState<VizType>(initial?.viz ?? "bar");
-  const [sql, setSql] = useState(initial?.sql ?? TEMPLATE);
+  const [viz, setViz] = useState<VizType>(
+    initial?.viz ?? (isLogs ? "logs" : "bar"),
+  );
+  const [sql, setSql] = useState(
+    initial?.sql ?? (isLogs ? LOGS_TEMPLATE : METRICS_TEMPLATE),
+  );
   const [preview, setPreview] = useState<QueryResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);

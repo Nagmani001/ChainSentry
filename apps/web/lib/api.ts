@@ -2,6 +2,7 @@ import type {
   AgentResult,
   Contract,
   Dashboard,
+  DashboardSection,
   DashboardSpec,
   QueryResult,
 } from "./types";
@@ -26,12 +27,20 @@ async function req<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const api = {
   listContracts: () => req<Contract[]>("/contracts"),
-  listDashboards: () => req<Dashboard[]>("/dashboards"),
+  listDashboards: (section?: DashboardSection) =>
+    req<Dashboard[]>(
+      `/dashboards${section ? `?section=${section}` : ""}`,
+    ),
   getDashboard: (id: string) => req<Dashboard>(`/dashboards/${id}`),
-  createDashboard: (name: string, spec: DashboardSpec, contractId?: string) =>
+  createDashboard: (
+    name: string,
+    spec: DashboardSpec,
+    section: DashboardSection,
+    contractId?: string,
+  ) =>
     req<Dashboard>("/dashboards", {
       method: "POST",
-      body: JSON.stringify({ name, spec, contractId }),
+      body: JSON.stringify({ name, spec, section, contractId }),
     }),
   updateDashboard: (id: string, data: { name?: string; spec?: DashboardSpec }) =>
     req<Dashboard>(`/dashboards/${id}`, {
@@ -45,9 +54,9 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ sql, params }),
     }),
-  agent: (prompt: string, contractId: string) =>
+  agent: (prompt: string, contractId: string, section?: DashboardSection) =>
     req<AgentResult>("/agent", {
       method: "POST",
-      body: JSON.stringify({ prompt, contractId }),
+      body: JSON.stringify({ prompt, contractId, section }),
     }),
 };
