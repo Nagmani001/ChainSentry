@@ -230,3 +230,112 @@ Keep answers short.`;
   }
   return { answer, panel, steps };
 }
+
+export interface IncidentTurn {
+  role: "user" | "agent";
+  text: string;
+}
+
+export interface IncidentContext {
+  prompt: string;
+  history: IncidentTurn[];
+  contractAddress: string;
+  chainId: number;
+  contractName?: string;
+}
+
+export interface IncidentResult {
+  answer: string;
+  steps: { sql: string; rowCount: number }[];
+}
+
+export async function runIncidentAgent(
+  ctx: IncidentContext,
+): Promise<IncidentResult> {
+  if (!env.geminiApiKey) {
+    throw new Error(
+      "The AI incident agent needs a Gemini API key. Set GEMINI_API_KEY in .env.",
+    );
+  }
+  const ai = new GoogleGenAI({ apiKey: env.geminiApiKey });
+  const params = { addr: ctx.contractAddress.toLowerCase(), chain: ctx.chainId };
+
+  const systemInstruction = `You are ChainSentry's AI incident agent. You help a developer understand and investigate their smart contract ${
+    ctx.contractName ? `"${ctx.contractName}" ` : ""
+  }(address ${ctx.contractAddress}, chain ${ctx.chainId}) using its on-chain activity indexed in ClickHouse.
+${SCHEMA_DOC}
+Your job is to give the developer clear information about their contract and to surface incidents. You can:
+- summarise recent activity across events, transactions and internal call frames,
+- investigate failures: reverted transactions (status = 0), failed internal calls (error != ''), unusual value transfers, gas spikes, sudden spikes in a particular event, or suspicious callers,
+- answer any specific question about the contract's on-chain behaviour.
+Always ground answers in real data: call run_query, possibly several times, before answering. Cite concrete numbers, shortened addresses, tx hashes and timestamps. If something looks abnormal, call it out and suggest what to check next. If the data shows nothing wrong, say so plainly. Keep answers focused and readable using short paragraphs or bullet points.`;
+
+  const contents: {
+    role: string;
+    parts: Record<string, unknown>[];
+  }[] = ctx.history.map((turn) => ({
+    role: turn.role === "user" ? "user" : "model",
+    parts: [{ text: turn.text }],
+  }));
+  contents.push({ role: "user", parts: [{ text: ctx.prompt }] });
+
+  const steps: { sql: string; rowCount: number }[] = [];
+  let answer = "";
+
+  for (let turn = 0; turn < 8; turn++) {
+    const res = await ai.models.generateContent({
+      model: env.geminiModel,
+      contents,
+      config: {
+        systemInstruction,
+        tools: [{ functionDeclarations: [runQueryDecl] }],
+        temperature: 0.3,
+      },
+    });
+
+    const calls = res.functionCalls ?? [];
+    if (calls.length === 0) {
+      answer = res.text ?? answer;
+      break;
+    }
+
+    contents.push({
+      role: "model",
+      parts: calls.map((c) => ({ functionCall: c })),
+    });
+
+    const responseParts: Record<string, unknown>[] = [];
+    for (const call of calls) {
+      const args = (call.args ?? {}) as Record<string, unknown>;
+      if (call.name === "run_query") {
+        try {
+          const r = await runReadOnlyQuery(String(args.sql), params);
+          steps.push({ sql: String(args.sql), rowCount: r.rowCount });
+          responseParts.push({
+            functionResponse: {
+              name: "run_query",
+              response: {
+                columns: r.columns,
+                rows: r.rows.slice(0, 50),
+                rowCount: r.rowCount,
+              },
+            },
+          });
+        } catch (err) {
+          responseParts.push({
+            functionResponse: {
+              name: "run_query",
+              response: { error: (err as Error).message },
+            },
+          });
+        }
+      }
+    }
+    contents.push({ role: "user", parts: responseParts });
+  }
+
+  if (!answer) {
+    answer = "I couldn't produce an answer. Try rephrasing.";
+  }
+  return { answer, steps };
+}
