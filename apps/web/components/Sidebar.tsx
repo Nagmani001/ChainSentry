@@ -6,14 +6,15 @@ import { usePathname } from "next/navigation";
 const NAV = [
   { key: "metrics", label: "Metrics", href: "/", enabled: true },
   { key: "logs", label: "Logs", href: "/logs", enabled: true },
-  { key: "traces", label: "Traces", href: "#", enabled: false },
+  { key: "traces", label: "Traces", href: "/traces", enabled: true },
   { key: "ai", label: "AI incident agent", href: "#", enabled: false },
   { key: "bridge", label: "web2 <-> web3", href: "#", enabled: false },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
-  const activeKey = pathname === "/logs" ? "logs" : "metrics";
+  const activeKey =
+    pathname === "/logs" ? "logs" : pathname === "/traces" ? "traces" : "metrics";
 
   return (
     <aside className="sidebar">

@@ -18,6 +18,7 @@ const VIZ_OPTIONS: VizType[] = [
   "pie",
   "table",
   "logs",
+  "trace",
 ];
 
 const METRICS_TEMPLATE = `SELECT event_name, count() AS count
@@ -33,6 +34,25 @@ WHERE contract_address = {addr:String} AND chain_id = {chain:UInt32}
 ORDER BY block_number DESC, log_index DESC
 LIMIT 200`;
 
+const TRACES_TEMPLATE = `SELECT tx_hash, block_number, trace_address, depth,
+       call_type, from_address, to_address, value, gas_used, method_selector, error
+FROM traces FINAL
+WHERE contract_address = {addr:String} AND chain_id = {chain:UInt32}
+ORDER BY block_number DESC, tx_index DESC, trace_address ASC
+LIMIT 400`;
+
+const TEMPLATE: Record<DashboardSection, string> = {
+  metrics: METRICS_TEMPLATE,
+  logs: LOGS_TEMPLATE,
+  traces: TRACES_TEMPLATE,
+};
+
+const DEFAULT_VIZ: Record<DashboardSection, VizType> = {
+  metrics: "bar",
+  logs: "logs",
+  traces: "trace",
+};
+
 export function PaneBuilderModal({
   initial,
   params,
@@ -46,14 +66,9 @@ export function PaneBuilderModal({
   onClose: () => void;
   onSave: (panel: Panel) => void;
 }) {
-  const isLogs = section === "logs";
   const [title, setTitle] = useState(initial?.title ?? "New panel");
-  const [viz, setViz] = useState<VizType>(
-    initial?.viz ?? (isLogs ? "logs" : "bar"),
-  );
-  const [sql, setSql] = useState(
-    initial?.sql ?? (isLogs ? LOGS_TEMPLATE : METRICS_TEMPLATE),
-  );
+  const [viz, setViz] = useState<VizType>(initial?.viz ?? DEFAULT_VIZ[section]);
+  const [sql, setSql] = useState(initial?.sql ?? TEMPLATE[section]);
   const [preview, setPreview] = useState<QueryResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
