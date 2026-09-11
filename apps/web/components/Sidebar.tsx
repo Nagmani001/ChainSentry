@@ -7,14 +7,20 @@ const NAV = [
   { key: "metrics", label: "Metrics", href: "/", enabled: true },
   { key: "logs", label: "Logs", href: "/logs", enabled: true },
   { key: "traces", label: "Traces", href: "/traces", enabled: true },
-  { key: "ai", label: "AI incident agent", href: "#", enabled: false },
+  { key: "ai", label: "AI incident agent", href: "/incident", enabled: true },
   { key: "bridge", label: "web2 <-> web3", href: "#", enabled: false },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
   const activeKey =
-    pathname === "/logs" ? "logs" : pathname === "/traces" ? "traces" : "metrics";
+    pathname === "/logs"
+      ? "logs"
+      : pathname === "/traces"
+        ? "traces"
+        : pathname === "/incident"
+          ? "ai"
+          : "metrics";
 
   return (
     <aside className="sidebar">
