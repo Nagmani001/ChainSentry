@@ -6,3 +6,79 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+enum Environment {
+  devnet
+  testnet
+  mainnet
+}
+
+enum JobStatus {
+  pending
+  generating
+  deploying
+  indexing
+  live
+  failed
+}
+
+model Contract {
+  id          String         @id @default(cuid())
+  address     String
+  chainId     Int
+  environment Environment
+  name        String?
+  abi         Json
+  deployBlock BigInt?
+  createdAt   DateTime       @default(now())
+  deployments Deployment[]
+  jobs        IngestionJob[]
+
+  @@unique([address, chainId])
+}
+
+model Deployment {
+  id            String        @id @default(cuid())
+  contractId    String
+  contract      Contract      @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  prompt        String
+  subgraphYaml  String
+  schemaGraphql String
+  mappingsTs    String
+  eventNames    String[]
+  projectPath   String?
+  deployStatus  String?
+  deployTarget  String?
+  deployMessage String?
+  queryUrl      String?
+  createdAt     DateTime      @default(now())
+  job           IngestionJob?
+}
+
+model Dashboard {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  contractId  String?
+  spec        Json
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model IngestionJob {
+  id               String      @id @default(cuid())
+  contractId       String
+  contract         Contract    @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  deploymentId     String?     @unique
+  deployment       Deployment? @relation(fields: [deploymentId], references: [id], onDelete: SetNull)
+  status           JobStatus   @default(pending)
+  startBlock       BigInt
+  lastIndexedBlock BigInt?
+  targetBlock      BigInt?
+  eventsIngested   Int         @default(0)
+  txIngested       Int         @default(0)
+  error            String?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+}
