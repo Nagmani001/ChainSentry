@@ -5,9 +5,10 @@ export type VizType =
   | "stat"
   | "table"
   | "pie"
-  | "logs";
+  | "logs"
+  | "trace";
 
-export type DashboardSection = "metrics" | "logs";
+export type DashboardSection = "metrics" | "logs" | "traces";
 
 export interface Panel {
   id: string;

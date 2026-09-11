@@ -18,6 +18,7 @@ import {
 } from "recharts";
 import type { QueryResult, VizType } from "../lib/types";
 import { LogStream } from "./LogStream";
+import { CallTree } from "./CallTree";
 
 const PALETTE = ["#2ee27a", "#4dd0e1", "#e2c14e", "#a78bfa", "#ef6f6f", "#7dd3fc"];
 
@@ -62,6 +63,10 @@ export function PanelChart({
 
   if (viz === "logs") {
     return <LogStream result={result} />;
+  }
+
+  if (viz === "trace") {
+    return <CallTree result={result} />;
   }
 
   if (rows.length === 0) {
