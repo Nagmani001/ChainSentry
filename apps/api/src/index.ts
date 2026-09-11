@@ -9,7 +9,7 @@ import { queryEvents, queryMetrics } from "./queries.js";
 import { runReadOnlyQuery } from "./rawQuery.js";
 import { ensureDefaultDashboards } from "./dashboards.js";
 import { ingestTraces } from "./traces.js";
-import { runAgent } from "./agent.js";
+import { runAgent, runIncidentAgent } from "./agent.js";
 import { env } from "./env.js";
 
 const app: Express = express();
@@ -267,6 +267,42 @@ app.post("/agent", async (req: Request, res: Response) => {
       chainId: contract.chainId,
       contractName: contract.name ?? undefined,
       section: parsed.data.section,
+    });
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
+});
+
+const incidentSchema = z.object({
+  prompt: z.string().min(1),
+  contractId: z.string().min(1),
+  history: z
+    .array(
+      z.object({
+        role: z.enum(["user", "agent"]),
+        text: z.string(),
+      }),
+    )
+    .optional(),
+});
+
+app.post("/incident", async (req: Request, res: Response) => {
+  const parsed = incidentSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error.flatten() });
+  }
+  const contract = await prisma.contract.findUnique({
+    where: { id: parsed.data.contractId },
+  });
+  if (!contract) return res.status(404).json({ error: "contract not found" });
+  try {
+    const result = await runIncidentAgent({
+      prompt: parsed.data.prompt,
+      history: parsed.data.history ?? [],
+      contractAddress: contract.address,
+      chainId: contract.chainId,
+      contractName: contract.name ?? undefined,
     });
     res.json(result);
   } catch (err) {
