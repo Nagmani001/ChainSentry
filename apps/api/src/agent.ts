@@ -21,6 +21,16 @@ TABLE transactions:
   gas_used UInt64, gas_price UInt64, effective_gas_price UInt64,
   status UInt8 (1 = success, 0 = revert), method_selector String
 
+TABLE traces (internal call frames from debug_traceTransaction):
+  chain_id UInt32, contract_address String, block_number UInt64, block_timestamp DateTime,
+  tx_hash String, tx_index UInt32,
+  trace_address String (dotted path within the call tree, e.g. "0.1.2"; root is ""),
+  depth UInt16 (0 = top-level call), call_type LowCardinality(String)
+    (CALL, DELEGATECALL, STATICCALL, CREATE, CREATE2, SELFDESTRUCT),
+  from_address String, to_address String, value String (wei),
+  gas UInt64, gas_used UInt64, input String, output String,
+  method_selector String (first 4 bytes of input), error String (empty when the call succeeded)
+
 RULES:
 - ALWAYS filter by: contract_address = {addr:String} AND chain_id = {chain:UInt32}
   (these params are supplied automatically; never inline literal addresses).
@@ -38,6 +48,10 @@ PANEL viz types and the shape their SQL must return:
   newest first, including block_timestamp, event_name and any detail columns
   (event_signature, block_number, log_index, tx_hash, topic0, args, data). Order by
   block_number DESC, log_index DESC and LIMIT it.
+- "trace": a call-tree view from the traces table. Select one row per call frame
+  including tx_hash, trace_address, depth, call_type, from_address, to_address, value,
+  gas_used, method_selector, error. Order by block_number DESC, tx_index DESC,
+  trace_address ASC so frames of each transaction stay in call order, then LIMIT.
 `;
 
 const runQueryDecl: FunctionDeclaration = {
@@ -67,7 +81,7 @@ const createPanelDecl: FunctionDeclaration = {
       title: { type: Type.STRING },
       viz: {
         type: Type.STRING,
-        enum: ["line", "bar", "area", "stat", "table", "pie", "logs"],
+        enum: ["line", "bar", "area", "stat", "table", "pie", "logs", "trace"],
       },
       sql: {
         type: Type.STRING,
@@ -88,7 +102,7 @@ export interface AgentContext {
   contractAddress: string;
   chainId: number;
   contractName?: string;
-  section?: "metrics" | "logs";
+  section?: "metrics" | "logs" | "traces";
 }
 
 export interface AgentResult {
@@ -109,7 +123,9 @@ export async function runAgent(ctx: AgentContext): Promise<AgentResult> {
   const sectionHint =
     ctx.section === "logs"
       ? `You are working in the LOGS section. Focus on the events table (event logs: topics, args, data). Prefer the "logs" viz for streams of individual log records, and "bar"/"area" for aggregates over events.`
-      : `You are working in the METRICS section. Focus on aggregate metrics over the transactions and events tables.`;
+      : ctx.section === "traces"
+        ? `You are working in the TRACES section. Focus on the traces table (internal call frames). Prefer the "trace" viz to show call trees, and "pie"/"bar"/"area" for aggregates over call frames (by call_type, callee, gas).`
+        : `You are working in the METRICS section. Focus on aggregate metrics over the transactions and events tables.`;
 
   const systemInstruction = `You are ChainSentry's observability copilot. You help a developer observe their smart contract ${
     ctx.contractName ? `"${ctx.contractName}" ` : ""

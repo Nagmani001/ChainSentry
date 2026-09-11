@@ -7,9 +7,10 @@ export type VizType =
   | "stat"
   | "table"
   | "pie"
-  | "logs";
+  | "logs"
+  | "trace";
 
-export type DashboardSection = "metrics" | "logs";
+export type DashboardSection = "metrics" | "logs" | "traces";
 
 export interface Panel {
   id: string;
@@ -146,11 +147,77 @@ export function defaultLogPanels(): Panel[] {
   ];
 }
 
+const TRACES_WHERE = EVENTS_WHERE;
+
+export function defaultTracePanels(): Panel[] {
+  return [
+    {
+      id: "trace-calls",
+      title: "Total Internal Calls",
+      viz: "stat",
+      gridPos: { x: 0, y: 0, w: 3, h: 3 },
+      sql: `SELECT count() AS value FROM traces FINAL WHERE ${TRACES_WHERE}`,
+    },
+    {
+      id: "trace-txs",
+      title: "Traced Transactions",
+      viz: "stat",
+      gridPos: { x: 3, y: 0, w: 3, h: 3 },
+      sql: `SELECT uniqExact(tx_hash) AS value FROM traces FINAL WHERE ${TRACES_WHERE}`,
+    },
+    {
+      id: "trace-depth",
+      title: "Max Call Depth",
+      viz: "stat",
+      gridPos: { x: 6, y: 0, w: 3, h: 3 },
+      sql: `SELECT max(depth) AS value FROM traces FINAL WHERE ${TRACES_WHERE}`,
+    },
+    {
+      id: "trace-failed",
+      title: "Failed Calls",
+      viz: "stat",
+      gridPos: { x: 9, y: 0, w: 3, h: 3 },
+      sql: `SELECT countIf(error != '') AS value FROM traces FINAL WHERE ${TRACES_WHERE}`,
+    },
+    {
+      id: "trace-by-type",
+      title: "Calls by Type",
+      viz: "pie",
+      gridPos: { x: 0, y: 3, w: 4, h: 7 },
+      sql: `SELECT call_type, count() AS count FROM traces FINAL WHERE ${TRACES_WHERE} GROUP BY call_type ORDER BY count DESC`,
+    },
+    {
+      id: "trace-callees",
+      title: "Top Internal Callees",
+      viz: "bar",
+      gridPos: { x: 4, y: 3, w: 8, h: 7 },
+      sql: `SELECT to_address, count() AS calls FROM traces FINAL WHERE ${TRACES_WHERE} AND depth > 0 GROUP BY to_address ORDER BY calls DESC LIMIT 15`,
+    },
+    {
+      id: "trace-gas",
+      title: "Gas Used by Internal Calls Over Time",
+      viz: "area",
+      gridPos: { x: 0, y: 10, w: 6, h: 6 },
+      sql: `SELECT toStartOfMinute(block_timestamp) AS t, sum(gas_used) AS gas_used FROM traces FINAL WHERE ${TRACES_WHERE} GROUP BY t ORDER BY t`,
+    },
+    {
+      id: "trace-tree",
+      title: "Call Trees (recent transactions)",
+      viz: "trace",
+      gridPos: { x: 6, y: 10, w: 6, h: 12 },
+      sql: `SELECT tx_hash, block_number, trace_address, depth, call_type, from_address, to_address, value, gas_used, method_selector, error FROM traces FINAL WHERE ${TRACES_WHERE} ORDER BY block_number DESC, tx_index DESC, trace_address ASC LIMIT 400`,
+    },
+  ];
+}
+
 export function defaultSpec(section: DashboardSection): DashboardSpec {
-  return {
-    refreshInterval: 0,
-    panels: section === "logs" ? defaultLogPanels() : defaultPanels(),
-  };
+  const panels =
+    section === "logs"
+      ? defaultLogPanels()
+      : section === "traces"
+        ? defaultTracePanels()
+        : defaultPanels();
+  return { refreshInterval: 0, panels };
 }
 
 async function ensureSectionDefault(
@@ -176,4 +243,5 @@ async function ensureSectionDefault(
 export async function ensureDefaultDashboards() {
   await ensureSectionDefault("metrics", "Contract Overview", "contract-overview");
   await ensureSectionDefault("logs", "Event Logs", "event-logs");
+  await ensureSectionDefault("traces", "Transaction Traces", "transaction-traces");
 }
