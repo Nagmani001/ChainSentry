@@ -1,0 +1,28 @@
+specVersion: 1.0.0
+description: ChainSentry auto-generated subgraph for WETH9
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum/contract
+    name: WETH9
+    network: sepolia
+    source:
+      address: "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14"
+      abi: WETH9
+      startBlock: 11680759
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities:
+        - Transfer
+        - Deposit
+      abis:
+        - name: WETH9
+          file: ./abis/WETH9.json
+      eventHandlers:
+        - event: Transfer(indexed address,indexed address,uint256)
+          handler: handleTransfer
+        - event: Deposit(indexed address,uint256)
+          handler: handleDeposit
+      file: ./src/mapping.ts
