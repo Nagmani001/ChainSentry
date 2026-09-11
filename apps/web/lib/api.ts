@@ -4,6 +4,8 @@ import type {
   Dashboard,
   DashboardSection,
   DashboardSpec,
+  IncidentResult,
+  IncidentTurn,
   QueryResult,
 } from "./types";
 
@@ -58,5 +60,10 @@ export const api = {
     req<AgentResult>("/agent", {
       method: "POST",
       body: JSON.stringify({ prompt, contractId, section }),
+    }),
+  incident: (prompt: string, contractId: string, history: IncidentTurn[]) =>
+    req<IncidentResult>("/incident", {
+      method: "POST",
+      body: JSON.stringify({ prompt, contractId, history }),
     }),
 };

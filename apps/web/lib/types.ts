@@ -54,3 +54,13 @@ export interface AgentResult {
   panel: Panel | null;
   steps: { sql: string; rowCount: number }[];
 }
+
+export interface IncidentTurn {
+  role: "user" | "agent";
+  text: string;
+}
+
+export interface IncidentResult {
+  answer: string;
+  steps: { sql: string; rowCount: number }[];
+}
