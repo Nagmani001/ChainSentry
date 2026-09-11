@@ -25,4 +25,9 @@ export const env = {
     testnet: process.env.RPC_TESTNET ?? "https://ethereum-sepolia-rpc.publicnode.com",
     devnet: process.env.RPC_DEVNET ?? "https://ethereum-holesky-rpc.publicnode.com",
   },
+  traceRpc: {
+    mainnet: process.env.TRACE_RPC_MAINNET ?? "https://eth.drpc.org",
+    testnet: process.env.TRACE_RPC_TESTNET ?? "https://sepolia.drpc.org",
+    devnet: process.env.TRACE_RPC_DEVNET ?? "https://holesky.drpc.org",
+  },
 };

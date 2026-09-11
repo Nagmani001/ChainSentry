@@ -8,6 +8,7 @@ import { runPipeline } from "./pipeline.js";
 import { queryEvents, queryMetrics } from "./queries.js";
 import { runReadOnlyQuery } from "./rawQuery.js";
 import { ensureDefaultDashboards } from "./dashboards.js";
+import { ingestTraces } from "./traces.js";
 import { runAgent } from "./agent.js";
 import { env } from "./env.js";
 
@@ -132,6 +133,21 @@ app.get("/contracts/:id/metrics", async (req: Request, res: Response) => {
   res.json(metrics);
 });
 
+app.post("/contracts/:id/traces", async (req: Request, res: Response) => {
+  const contract = await prisma.contract.findUnique({ where: { id: req.params.id } });
+  if (!contract) return res.status(404).json({ error: "contract not found" });
+  try {
+    const result = await ingestTraces({
+      environment: contract.environment,
+      contractAddress: contract.address,
+      limit: req.query.limit ? Number(req.query.limit) : undefined,
+    });
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: (err as Error).message });
+  }
+});
+
 app.get("/jobs/:id", async (req: Request, res: Response) => {
   const job = await prisma.ingestionJob.findUnique({ where: { id: req.params.id } });
   if (!job) return res.status(404).json({ error: "job not found" });
@@ -168,7 +184,7 @@ app.get("/dashboards", async (req: Request, res: Response) => {
 const upsertDashboardSchema = z.object({
   name: z.string().min(1),
   spec: z.unknown(),
-  section: z.enum(["metrics", "logs"]).optional(),
+  section: z.enum(["metrics", "logs", "traces"]).optional(),
   contractId: z.string().optional(),
 });
 
@@ -232,7 +248,7 @@ app.delete("/dashboards/:id", async (req: Request, res: Response) => {
 const agentSchema = z.object({
   prompt: z.string().min(1),
   contractId: z.string().min(1),
-  section: z.enum(["metrics", "logs"]).optional(),
+  section: z.enum(["metrics", "logs", "traces"]).optional(),
 });
 
 app.post("/agent", async (req: Request, res: Response) => {
