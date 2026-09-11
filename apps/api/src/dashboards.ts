@@ -1,6 +1,15 @@
 import { prisma } from "./clients.js";
 
-export type VizType = "line" | "bar" | "area" | "stat" | "table" | "pie";
+export type VizType =
+  | "line"
+  | "bar"
+  | "area"
+  | "stat"
+  | "table"
+  | "pie"
+  | "logs";
+
+export type DashboardSection = "metrics" | "logs";
 
 export interface Panel {
   id: string;
@@ -83,21 +92,88 @@ export function defaultPanels(): Panel[] {
   ];
 }
 
-export function defaultSpec(): DashboardSpec {
-  return { refreshInterval: 0, panels: defaultPanels() };
+export function defaultLogPanels(): Panel[] {
+  return [
+    {
+      id: "log-total",
+      title: "Total Log Records",
+      viz: "stat",
+      gridPos: { x: 0, y: 0, w: 3, h: 3 },
+      sql: `SELECT count() AS value FROM events FINAL WHERE ${EVENTS_WHERE}`,
+    },
+    {
+      id: "log-types",
+      title: "Distinct Event Types",
+      viz: "stat",
+      gridPos: { x: 3, y: 0, w: 3, h: 3 },
+      sql: `SELECT uniqExact(event_name) AS value FROM events FINAL WHERE ${EVENTS_WHERE}`,
+    },
+    {
+      id: "log-blocks",
+      title: "Blocks With Logs",
+      viz: "stat",
+      gridPos: { x: 6, y: 0, w: 3, h: 3 },
+      sql: `SELECT uniqExact(block_number) AS value FROM events FINAL WHERE ${EVENTS_WHERE}`,
+    },
+    {
+      id: "log-latest",
+      title: "Latest Block",
+      viz: "stat",
+      gridPos: { x: 9, y: 0, w: 3, h: 3 },
+      sql: `SELECT max(block_number) AS value FROM events FINAL WHERE ${EVENTS_WHERE}`,
+    },
+    {
+      id: "log-volume",
+      title: "Log Volume Over Time",
+      viz: "area",
+      gridPos: { x: 0, y: 3, w: 6, h: 6 },
+      sql: `SELECT toStartOfMinute(block_timestamp) AS t, count() AS logs FROM events FINAL WHERE ${EVENTS_WHERE} GROUP BY t ORDER BY t`,
+    },
+    {
+      id: "log-by-type",
+      title: "Logs by Event Type",
+      viz: "bar",
+      gridPos: { x: 6, y: 3, w: 6, h: 6 },
+      sql: `SELECT event_name, count() AS count FROM events FINAL WHERE ${EVENTS_WHERE} GROUP BY event_name ORDER BY count DESC LIMIT 20`,
+    },
+    {
+      id: "log-stream",
+      title: "Live Event Log Stream",
+      viz: "logs",
+      gridPos: { x: 0, y: 9, w: 12, h: 12 },
+      sql: `SELECT block_timestamp, event_name, event_signature, block_number, log_index, tx_hash, topic0, args, data FROM events FINAL WHERE ${EVENTS_WHERE} ORDER BY block_number DESC, log_index DESC LIMIT 200`,
+    },
+  ];
 }
 
-export async function ensureDefaultDashboard() {
+export function defaultSpec(section: DashboardSection): DashboardSpec {
+  return {
+    refreshInterval: 0,
+    panels: section === "logs" ? defaultLogPanels() : defaultPanels(),
+  };
+}
+
+async function ensureSectionDefault(
+  section: DashboardSection,
+  name: string,
+  slug: string,
+) {
   const existing = await prisma.dashboard.findFirst({
-    where: { isDefault: true },
+    where: { isDefault: true, section },
   });
   if (existing) return existing;
   return prisma.dashboard.create({
     data: {
-      name: "Contract Overview",
-      slug: "contract-overview",
+      name,
+      slug,
+      section,
       isDefault: true,
-      spec: defaultSpec() as object,
+      spec: defaultSpec(section) as object,
     },
   });
+}
+
+export async function ensureDefaultDashboards() {
+  await ensureSectionDefault("metrics", "Contract Overview", "contract-overview");
+  await ensureSectionDefault("logs", "Event Logs", "event-logs");
 }

@@ -34,6 +34,10 @@ PANEL viz types and the shape their SQL must return:
 - "bar": first column = category label, remaining numeric columns = series.
 - "pie": exactly two columns: (label, value).
 - "table": any columns.
+- "logs": a Grafana-style log stream from the events table. Select one row per log,
+  newest first, including block_timestamp, event_name and any detail columns
+  (event_signature, block_number, log_index, tx_hash, topic0, args, data). Order by
+  block_number DESC, log_index DESC and LIMIT it.
 `;
 
 const runQueryDecl: FunctionDeclaration = {
@@ -63,7 +67,7 @@ const createPanelDecl: FunctionDeclaration = {
       title: { type: Type.STRING },
       viz: {
         type: Type.STRING,
-        enum: ["line", "bar", "area", "stat", "table", "pie"],
+        enum: ["line", "bar", "area", "stat", "table", "pie", "logs"],
       },
       sql: {
         type: Type.STRING,
@@ -84,6 +88,7 @@ export interface AgentContext {
   contractAddress: string;
   chainId: number;
   contractName?: string;
+  section?: "metrics" | "logs";
 }
 
 export interface AgentResult {
@@ -101,9 +106,15 @@ export async function runAgent(ctx: AgentContext): Promise<AgentResult> {
   const ai = new GoogleGenAI({ apiKey: env.geminiApiKey });
   const params = { addr: ctx.contractAddress.toLowerCase(), chain: ctx.chainId };
 
-  const systemInstruction = `You are ChainSentry's metrics copilot. You help a developer observe their smart contract ${
+  const sectionHint =
+    ctx.section === "logs"
+      ? `You are working in the LOGS section. Focus on the events table (event logs: topics, args, data). Prefer the "logs" viz for streams of individual log records, and "bar"/"area" for aggregates over events.`
+      : `You are working in the METRICS section. Focus on aggregate metrics over the transactions and events tables.`;
+
+  const systemInstruction = `You are ChainSentry's observability copilot. You help a developer observe their smart contract ${
     ctx.contractName ? `"${ctx.contractName}" ` : ""
   }(address ${ctx.contractAddress}, chain ${ctx.chainId}) using ClickHouse.
+${sectionHint}
 ${SCHEMA_DOC}
 When the user asks a question, use run_query then answer concisely in plain English with the numbers.
 When the user wants a chart/pane/panel, call create_panel with well-formed SQL and the best viz.

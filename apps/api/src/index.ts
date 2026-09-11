@@ -7,7 +7,7 @@ import { clickhouse, prisma } from "./clients.js";
 import { runPipeline } from "./pipeline.js";
 import { queryEvents, queryMetrics } from "./queries.js";
 import { runReadOnlyQuery } from "./rawQuery.js";
-import { ensureDefaultDashboard } from "./dashboards.js";
+import { ensureDefaultDashboards } from "./dashboards.js";
 import { runAgent } from "./agent.js";
 import { env } from "./env.js";
 
@@ -156,8 +156,10 @@ app.post("/query", async (req: Request, res: Response) => {
   }
 });
 
-app.get("/dashboards", async (_req: Request, res: Response) => {
+app.get("/dashboards", async (req: Request, res: Response) => {
+  const section = req.query.section as string | undefined;
   const dashboards = await prisma.dashboard.findMany({
+    where: section ? { section } : undefined,
     orderBy: [{ isDefault: "desc" }, { updatedAt: "desc" }],
   });
   res.json(dashboards);
@@ -166,6 +168,7 @@ app.get("/dashboards", async (_req: Request, res: Response) => {
 const upsertDashboardSchema = z.object({
   name: z.string().min(1),
   spec: z.unknown(),
+  section: z.enum(["metrics", "logs"]).optional(),
   contractId: z.string().optional(),
 });
 
@@ -180,6 +183,7 @@ app.post("/dashboards", async (req: Request, res: Response) => {
     data: {
       name: parsed.data.name,
       slug,
+      section: parsed.data.section ?? "metrics",
       contractId: parsed.data.contractId ?? null,
       spec: parsed.data.spec as object,
     },
@@ -228,6 +232,7 @@ app.delete("/dashboards/:id", async (req: Request, res: Response) => {
 const agentSchema = z.object({
   prompt: z.string().min(1),
   contractId: z.string().min(1),
+  section: z.enum(["metrics", "logs"]).optional(),
 });
 
 app.post("/agent", async (req: Request, res: Response) => {
@@ -245,6 +250,7 @@ app.post("/agent", async (req: Request, res: Response) => {
       contractAddress: contract.address,
       chainId: contract.chainId,
       contractName: contract.name ?? undefined,
+      section: parsed.data.section,
     });
     res.json(result);
   } catch (err) {
@@ -254,7 +260,7 @@ app.post("/agent", async (req: Request, res: Response) => {
 
 async function main() {
   await migrateClickHouse(clickhouse);
-  await ensureDefaultDashboard();
+  await ensureDefaultDashboards();
   app.listen(env.port, () => {
     console.log(`ChainSentry API listening on http://localhost:${env.port}`);
   });
