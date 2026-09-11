@@ -1,4 +1,13 @@
-export type VizType = "line" | "bar" | "area" | "stat" | "table" | "pie";
+export type VizType =
+  | "line"
+  | "bar"
+  | "area"
+  | "stat"
+  | "table"
+  | "pie"
+  | "logs";
+
+export type DashboardSection = "metrics" | "logs";
 
 export interface Panel {
   id: string;
@@ -18,6 +27,7 @@ export interface Dashboard {
   id: string;
   name: string;
   slug: string;
+  section: DashboardSection;
   isDefault: boolean;
   contractId: string | null;
   spec: DashboardSpec;

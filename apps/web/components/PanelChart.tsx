@@ -17,6 +17,7 @@ import {
   YAxis,
 } from "recharts";
 import type { QueryResult, VizType } from "../lib/types";
+import { LogStream } from "./LogStream";
 
 const PALETTE = ["#2ee27a", "#4dd0e1", "#e2c14e", "#a78bfa", "#ef6f6f", "#7dd3fc"];
 
@@ -58,6 +59,10 @@ export function PanelChart({
 }) {
   const cols = result.columns.map((c) => c.name);
   const rows = result.rows;
+
+  if (viz === "logs") {
+    return <LogStream result={result} />;
+  }
 
   if (rows.length === 0) {
     return <div className="panel-loading">No data.</div>;
