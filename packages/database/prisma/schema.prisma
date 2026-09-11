@@ -59,6 +59,7 @@ model Dashboard {
   id          String   @id @default(cuid())
   name        String
   slug        String   @unique
+  section     String   @default("metrics")
   contractId  String?
   spec        Json
   isDefault   Boolean  @default(false)
