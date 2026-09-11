@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { QueryResult } from "../lib/types";
+import { Icon } from "./Icon";
 
 interface Frame {
   txHash: string;
@@ -65,7 +66,9 @@ function TxTree({ group, open }: { group: TxGroup; open: boolean }) {
   return (
     <div className={`ct-tx ${expanded ? "open" : ""}`}>
       <button className="ct-tx-head" onClick={() => setExpanded((v) => !v)}>
-        <span className="log-caret">{expanded ? "▾" : "▸"}</span>
+        <span className="log-caret">
+          <Icon name={expanded ? "chevronDown" : "chevronRight"} size={13} />
+        </span>
         <span className="ct-txhash">{short(group.txHash)}</span>
         <span className="ct-meta">block {group.blockNumber}</span>
         <span className="ct-meta">{group.frames.length} calls</span>

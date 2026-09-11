@@ -34,12 +34,33 @@ export interface Dashboard {
   spec: DashboardSpec;
 }
 
+export type Environment = "devnet" | "testnet" | "mainnet";
+
 export interface Contract {
   id: string;
   address: string;
   chainId: number;
-  environment: "devnet" | "testnet" | "mainnet";
+  environment: Environment;
   name: string | null;
+}
+
+export interface CreateContractInput {
+  address: string;
+  environment: Environment;
+  prompt: string;
+  maxBlocks?: number;
+}
+
+export interface CreateContractResult {
+  contract: Contract;
+  contractName: string | null;
+  deployBlock: number | null;
+  plan: {
+    selectedEvents: string[];
+    includeTransactions: boolean;
+    notes: string[];
+  };
+  ingestResult?: { inserted?: number; events?: number } | null;
 }
 
 export interface QueryResult {

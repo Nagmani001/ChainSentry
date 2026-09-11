@@ -1,6 +1,8 @@
 import type {
   AgentResult,
   Contract,
+  CreateContractInput,
+  CreateContractResult,
   Dashboard,
   DashboardSection,
   DashboardSpec,
@@ -29,6 +31,11 @@ async function req<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const api = {
   listContracts: () => req<Contract[]>("/contracts"),
+  createContract: (input: CreateContractInput) =>
+    req<CreateContractResult>("/contracts", {
+      method: "POST",
+      body: JSON.stringify(input),
+    }),
   listDashboards: (section?: DashboardSection) =>
     req<Dashboard[]>(
       `/dashboards${section ? `?section=${section}` : ""}`,

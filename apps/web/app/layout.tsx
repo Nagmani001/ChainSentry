@@ -1,19 +1,25 @@
 import type { Metadata } from "next";
-import localFont from "next/font/local";
+import { Inter, Roboto_Mono } from "next/font/google";
 import "./globals.css";
+import { AppShell } from "../components/AppShell";
 
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
+const inter = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-sans-fallback",
+  display: "swap",
 });
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
+
+const robotoMono = Roboto_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-mono-fallback",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "ChainSentry — Metrics",
-  description: "Observability for smart contracts",
+  title: "ChainSentry",
+  description: "Observability for smart contracts — logs, metrics and traces.",
 };
 
 export default function RootLayout({
@@ -22,9 +28,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
-        {children}
+    <html lang="en" className={`${inter.variable} ${robotoMono.variable}`}>
+      <body>
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );

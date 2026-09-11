@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { api } from "../lib/api";
-import type { Contract, IncidentTurn } from "../lib/types";
-import { Sidebar } from "./Sidebar";
+import type { Contract, Environment, IncidentTurn } from "../lib/types";
+import { Icon } from "./Icon";
 
 const SUGGESTIONS = [
   "Summarise my contract's activity over the last 24 hours",
@@ -11,6 +11,16 @@ const SUGGESTIONS = [
   "Which internal calls are reverting, and why?",
   "Who are the most active callers?",
 ];
+
+const ENV_BADGE: Record<Environment, string> = {
+  devnet: "env-dev",
+  testnet: "env-test",
+  mainnet: "env-main",
+};
+
+function shortAddr(a: string): string {
+  return a.length > 14 ? `${a.slice(0, 6)}…${a.slice(-4)}` : a;
+}
 
 export function IncidentAgent() {
   const [contracts, setContracts] = useState<Contract[]>([]);
@@ -26,9 +36,14 @@ export function IncidentAgent() {
       try {
         const cs = await api.listContracts();
         setContracts(cs);
-        if (cs.length) setContractId(cs[0]!.id);
-      } catch (e) {
-        setBanner((e as Error).message);
+        const wanted =
+          new URLSearchParams(window.location.search).get("c") ?? "";
+        const pick = cs.find((c) => c.id === wanted) ?? cs[0];
+        if (pick) setContractId(pick.id);
+      } catch {
+        setBanner(
+          "Can't reach the ChainSentry API — the incident agent needs a running API to investigate.",
+        );
       }
     })();
   }, []);
@@ -36,6 +51,8 @@ export function IncidentAgent() {
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, busy]);
+
+  const active = contracts.find((c) => c.id === contractId);
 
   const send = async (text?: string) => {
     const q = (text ?? prompt).trim();
@@ -48,7 +65,10 @@ export function IncidentAgent() {
       const res = await api.incident(q, contractId, history);
       setMessages((m) => [...m, { role: "agent", text: res.answer }]);
     } catch (e) {
-      setMessages((m) => [...m, { role: "agent", text: `⚠ ${(e as Error).message}` }]);
+      setMessages((m) => [
+        ...m,
+        { role: "agent", text: `${(e as Error).message}` },
+      ]);
     } finally {
       setBusy(false);
     }
@@ -58,119 +78,158 @@ export function IncidentAgent() {
   const disabled = busy || !contractId;
 
   return (
-    <div className="app">
-      <Sidebar />
-      <div className="main">
-        <div className="topbar">
-          <span className="topbar-title">AI incident agent</span>
-          <div className="spacer" />
-          <select
-            className="select"
-            value={contractId}
-            onChange={(e) => setContractId(e.target.value)}
-          >
-            {contracts.length === 0 ? <option value="">No contracts</option> : null}
-            {contracts.map((c) => (
-              <option key={c.id} value={c.id}>
-                {(c.name ?? "Contract") +
-                  " · " +
-                  c.environment +
-                  " · " +
-                  c.address.slice(0, 8) +
-                  "…"}
-              </option>
-            ))}
-          </select>
-          <span className="auth-chip" title="Authentication is not wired up yet">
-            Auth · TBD
+    <div className="dash">
+      <div className="dash-toolbar">
+        <div className="dash-title-group">
+          <span className="dash-title-mark">
+            <Icon name="incident" size={18} />
           </span>
+          <h1 className="dash-title">Incident agent</h1>
         </div>
-
-        {banner ? (
-          <div
-            className="agent-msg"
-            style={{ margin: "8px 18px", borderColor: "var(--danger)" }}
-          >
-            {banner}
+        <div className="spacer" />
+        <div className="var">
+          <span className="var-label">contract</span>
+          <div className="select-wrap">
+            <select
+              className="select"
+              value={contractId}
+              onChange={(e) => setContractId(e.target.value)}
+            >
+              {contracts.length === 0 ? <option value="">No contracts</option> : null}
+              {contracts.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {(c.name ?? "Contract") +
+                    " · " +
+                    c.environment +
+                    " · " +
+                    c.address.slice(0, 10) +
+                    "…"}
+                </option>
+              ))}
+            </select>
+            <Icon name="chevronDown" size={14} className="select-chevron" />
           </div>
+        </div>
+        {active ? (
+          <span className={`env-badge ${ENV_BADGE[active.environment]}`}>
+            {active.environment}
+          </span>
         ) : null}
+      </div>
 
-        {empty ? (
-          <div className="incident-hero">
-            <div className="incident-hero-title">Ask about your smart contract</div>
-            <div className="incident-hero-sub">
-              The incident agent inspects your indexed events, transactions and
-              traces to answer questions and surface anomalies.
-            </div>
-            <div className="incident-hero-input">
-              <input
-                className="input"
-                placeholder="Prompt"
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && send()}
-                disabled={disabled}
-              />
+      {banner ? (
+        <div className="alert warn dash-alert">
+          <Icon name="warning" size={16} />
+          <span>{banner}</span>
+          <button
+            className="alert-dismiss"
+            onClick={() => setBanner(null)}
+            aria-label="Dismiss"
+          >
+            <Icon name="close" size={14} />
+          </button>
+        </div>
+      ) : null}
+
+      {empty ? (
+        <div className="incident-hero">
+          <span className="incident-hero-mark">
+            <Icon name="incident" size={30} />
+          </span>
+          <div className="incident-hero-title">Investigate your contract</div>
+          <div className="incident-hero-sub">
+            The incident agent inspects indexed events, transactions and traces
+            to answer questions, correlate signals and surface anomalies —
+            grounded in the on-chain record.
+          </div>
+          <div className="incident-hero-input">
+            <input
+              className="input"
+              placeholder="Ask about anomalies, reverts, callers, gas…"
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && send()}
+              disabled={disabled}
+            />
+            <button className="btn primary lg" onClick={() => send()} disabled={disabled}>
+              Investigate <Icon name="send" size={16} />
+            </button>
+          </div>
+          <div className="incident-suggest">
+            {SUGGESTIONS.map((s) => (
               <button
-                className="btn primary"
-                onClick={() => send()}
+                key={s}
+                className="sample-chip"
+                onClick={() => send(s)}
                 disabled={disabled}
               >
-                Send
+                {s}
               </button>
-            </div>
-            <div className="incident-suggest">
-              {SUGGESTIONS.map((s) => (
-                <button
-                  key={s}
-                  className="chip"
-                  onClick={() => send(s)}
-                  disabled={disabled}
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
+            ))}
           </div>
-        ) : (
-          <>
-            <div className="incident-thread">
-              {messages.map((m, i) => (
-                <div key={i} className={`chat-msg ${m.role}`}>
+        </div>
+      ) : (
+        <>
+          <div className="incident-thread">
+            {messages.map((m, i) => (
+              <div key={i} className={`chat-msg ${m.role}`}>
+                <div className="chat-avatar">
+                  <Icon name={m.role === "user" ? "user" : "incident"} size={15} />
+                </div>
+                <div className="chat-bubble">
                   <div className="role">
                     {m.role === "user" ? "You" : "Incident agent"}
                   </div>
                   <div className="chat-text">{m.text}</div>
                 </div>
-              ))}
-              {busy ? (
-                <div className="chat-msg agent">
-                  <div className="role">Incident agent</div>
-                  <div className="chat-text dim">Investigating…</div>
+              </div>
+            ))}
+            {busy ? (
+              <div className="chat-msg agent">
+                <div className="chat-avatar">
+                  <Icon name="incident" size={15} />
                 </div>
-              ) : null}
-              <div ref={endRef} />
-            </div>
-            <div className="promptbar">
-              <input
-                className="input"
-                placeholder="Ask a follow-up…"
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && send()}
-                disabled={disabled}
-              />
-              <button
-                className="btn primary"
-                onClick={() => send()}
-                disabled={disabled}
-              >
-                {busy ? "Thinking…" : "Send"}
-              </button>
-            </div>
-          </>
-        )}
-      </div>
+                <div className="chat-bubble">
+                  <div className="role">Incident agent</div>
+                  <div className="chat-text dim">
+                    <span className="typing">
+                      <span />
+                      <span />
+                      <span />
+                    </span>
+                    Investigating the on-chain record…
+                  </div>
+                </div>
+              </div>
+            ) : null}
+            <div ref={endRef} />
+          </div>
+          <div className="promptbar">
+            <span className="promptbar-icon">
+              <Icon name="incident" size={17} />
+            </span>
+            <input
+              className="input"
+              placeholder="Ask a follow-up…"
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && send()}
+              disabled={disabled}
+            />
+            <button className="btn primary" onClick={() => send()} disabled={disabled}>
+              {busy ? (
+                <>
+                  <span className="spinner" /> Thinking…
+                </>
+              ) : (
+                <>
+                  Send <Icon name="send" size={16} />
+                </>
+              )}
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }

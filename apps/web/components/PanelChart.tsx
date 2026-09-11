@@ -20,17 +20,27 @@ import type { QueryResult, VizType } from "../lib/types";
 import { LogStream } from "./LogStream";
 import { CallTree } from "./CallTree";
 
-const PALETTE = ["#2ee27a", "#4dd0e1", "#e2c14e", "#a78bfa", "#ef6f6f", "#7dd3fc"];
+const PALETTE = [
+  "#73BF69",
+  "#5794F2",
+  "#FF9830",
+  "#B877D9",
+  "#F2495C",
+  "#FADE2A",
+  "#4DD0E1",
+  "#FF7383",
+];
 
-const AXIS = { stroke: "#5c6a61" };
-const GRID = "#223028";
+const AXIS = { stroke: "rgba(204,204,220,0.35)" };
+const GRID = "rgba(204,204,220,0.09)";
 
 const tooltipStyle = {
-  background: "#111613",
-  border: "1px solid #2f4438",
-  borderRadius: 8,
+  background: "#181b1f",
+  border: "1px solid rgba(204,204,220,0.2)",
+  borderRadius: 3,
   fontSize: 12,
-  color: "#d7e0da",
+  color: "#ccccdc",
+  boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
 };
 
 function isNumericish(v: unknown): boolean {

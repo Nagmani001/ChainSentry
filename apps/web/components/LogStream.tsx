@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { QueryResult } from "../lib/types";
+import { Icon } from "./Icon";
 
 const TIME_KEYS = ["block_timestamp", "timestamp", "time", "t"];
 const NAME_KEYS = ["event_name", "name", "event"];
@@ -64,7 +65,9 @@ function LogRow({
   return (
     <div className={`log-row ${open ? "open" : ""}`}>
       <button className="log-line" onClick={() => setOpen((v) => !v)}>
-        <span className="log-caret">{open ? "▾" : "▸"}</span>
+        <span className="log-caret">
+          <Icon name={open ? "chevronDown" : "chevronRight"} size={13} />
+        </span>
         {timeKey ? (
           <span className="log-time">{fmtTime(row[timeKey])}</span>
         ) : null}

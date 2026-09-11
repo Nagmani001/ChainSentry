@@ -1,5 +1,5 @@
-import { DashboardView } from "../components/DashboardView";
+import { ConnectScreen } from "../components/ConnectScreen";
 
 export default function Page() {
-  return <DashboardView section="metrics" title="Metrics" />;
+  return <ConnectScreen />;
 }

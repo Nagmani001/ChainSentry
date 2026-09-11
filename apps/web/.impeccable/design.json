@@ -1,0 +1,160 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-11T00:00:00Z",
+  "title": "Design System: ChainSentry",
+  "extensions": {
+    "colorMeta": {
+      "canvas": { "role": "neutral", "displayName": "Canvas Black", "canonical": "#111217", "tonalRamp": ["#0a0b0e", "#111217", "#181b1f", "#22252b", "#2e3238", "#40454d", "#5a616b", "#7c8490"] },
+      "panel": { "role": "neutral", "displayName": "Panel Slate", "canonical": "#181b1f", "tonalRamp": ["#0d0f11", "#131518", "#181b1f", "#22252b", "#2c3037", "#3b4048", "#565c66", "#78808b"] },
+      "raised": { "role": "neutral", "displayName": "Raised Slate", "canonical": "#22252b", "tonalRamp": ["#111217", "#181b1f", "#22252b", "#2c3037", "#383d45", "#484e58", "#646b76", "#868e99"] },
+      "overlay": { "role": "neutral", "displayName": "Overlay Slate", "canonical": "#1d1f24", "tonalRamp": ["#0f1013", "#161820", "#1d1f24", "#282b31", "#343841", "#454b55", "#616873", "#838b96"] },
+      "input-bg": { "role": "neutral", "displayName": "Recessed Well", "canonical": "#0e0f13", "tonalRamp": ["#060709", "#0a0b0e", "#0e0f13", "#161821", "#20232b", "#2f333c", "#494f59", "#6d747f"] },
+      "text": { "role": "neutral", "displayName": "Off-White", "canonical": "#ccccdc", "tonalRamp": ["#26262f", "#3a3a47", "#525260", "#6c6c7c", "#8a8a99", "#a5a5b6", "#ccccdc", "#e6e6f0"] },
+      "text-2": { "role": "neutral", "displayName": "Dimmed Text", "canonical": "rgba(204,204,220,0.65)", "tonalRamp": [] },
+      "text-3": { "role": "neutral", "displayName": "Muted Text", "canonical": "rgba(204,204,220,0.58)", "tonalRamp": [] },
+      "border": { "role": "neutral", "displayName": "Hairline Border", "canonical": "rgba(204,204,220,0.12)", "tonalRamp": [] },
+      "border-medium": { "role": "neutral", "displayName": "Control Stroke", "canonical": "rgba(204,204,220,0.2)", "tonalRamp": [] },
+      "border-weak": { "role": "neutral", "displayName": "Faint Divider", "canonical": "rgba(204,204,220,0.07)", "tonalRamp": [] },
+      "blue": { "role": "primary", "displayName": "Signal Blue", "canonical": "#3d71d9", "tonalRamp": ["#0e1b35", "#16294f", "#1e3a70", "#2a5199", "#3d71d9", "#5a8ae4", "#8bafee", "#c1d4f7"] },
+      "blue-hover": { "role": "primary", "displayName": "Blue Hover", "canonical": "#5581e0", "tonalRamp": [] },
+      "blue-text": { "role": "primary", "displayName": "Link Blue", "canonical": "#6e9fff", "tonalRamp": ["#101f3d", "#182f5c", "#22437f", "#2f5aa8", "#3f79d6", "#5a90ec", "#6e9fff", "#a9c5ff"] },
+      "green": { "role": "secondary", "displayName": "Signal Green", "canonical": "#73bf69", "tonalRamp": ["#12240f", "#1b3617", "#264d20", "#34682c", "#45883a", "#5aa54c", "#73bf69", "#a6da9f"] },
+      "yellow": { "role": "secondary", "displayName": "Signal Yellow", "canonical": "#fade2a", "tonalRamp": ["#3a3306", "#54490a", "#77670e", "#9c8712", "#c7ad1c", "#e8ca20", "#fade2a", "#fded80"] },
+      "orange": { "role": "secondary", "displayName": "Signal Orange", "canonical": "#ff9830", "tonalRamp": ["#3d2306", "#57320a", "#7a460e", "#a05c12", "#cc7519", "#f08a22", "#ff9830", "#ffc180"] },
+      "red": { "role": "secondary", "displayName": "Signal Red", "canonical": "#f2495c", "tonalRamp": ["#360d13", "#4f131c", "#701b28", "#992436", "#c73044", "#e63a50", "#f2495c", "#f79aa5"] },
+      "red-strong": { "role": "secondary", "displayName": "Deep Red", "canonical": "#e02f44", "tonalRamp": [] },
+      "purple": { "role": "secondary", "displayName": "Signal Purple", "canonical": "#b877d9", "tonalRamp": ["#2c163a", "#3f2052", "#5a2f73", "#764099", "#9455bd", "#a967cd", "#b877d9", "#d6acea"] },
+      "cyan": { "role": "secondary", "displayName": "Signal Cyan", "canonical": "#4dd0e1", "tonalRamp": ["#0c3138", "#124650", "#186470", "#218693", "#2fa8b7", "#3ec1d2", "#4dd0e1", "#98e6ef"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display Stat", "purpose": "Single-value stat panels — the big mono number, tabular figures." },
+      "headline": { "displayName": "Screen Hero", "purpose": "Standalone screen titles: connect card, incident-agent hero." },
+      "title": { "displayName": "Section Title", "purpose": "Container and section headings: dashboard title, page h1, modal titles." },
+      "body": { "displayName": "Body / UI", "purpose": "Default 14px UI text, nav items, buttons, controls." },
+      "label": { "displayName": "Label / Badge", "purpose": "Small uppercase badges, field labels, group tags, kbd hints." },
+      "mono": { "displayName": "Data / Mono", "purpose": "Every value, address, hash, selector, timestamp — Roboto Mono, tabular-nums." }
+    },
+    "gradients": [
+      { "name": "brand", "value": "linear-gradient(135deg, #ff9830, #f2495c)", "purpose": "The only branded flourish — active-nav 3px left bar and the wordmark. Never in content." }
+    ],
+    "shadows": [
+      { "name": "modal-lift", "value": "0 16px 48px rgba(0,0,0,0.55)", "purpose": "Center-screen dialogs over a blur(2px) scrim." },
+      { "name": "palette-lift", "value": "0 20px 60px rgba(0,0,0,0.6)", "purpose": "The command palette dropped from 12vh." },
+      { "name": "tooltip-lift", "value": "0 4px 12px rgba(0,0,0,0.5)", "purpose": "Recharts hover tooltips." },
+      { "name": "drawer-lift", "value": "0 0 40px rgba(0,0,0,0.6)", "purpose": "Off-canvas nav rail on mobile (< 720px)." },
+      { "name": "active-tab-underline", "value": "inset 0 -2px 0 #3d71d9", "purpose": "Selected segmented tab marker — the one inset shadow." }
+    ],
+    "motion": [
+      { "name": "state-fast", "value": "0.1s", "purpose": "Default transition for hover/active on chrome (background, border, color)." },
+      { "name": "drawer-slide", "value": "transform 0.18s ease", "purpose": "Mobile nav rail slide-in." },
+      { "name": "spin", "value": "0.7s linear infinite", "purpose": "Loading spinner rotation." },
+      { "name": "blink", "value": "1.2s ease-in-out infinite", "purpose": "Typing dots and panel loading dot pulse." },
+      { "name": "shimmer", "value": "1.4s ease infinite", "purpose": "Skeleton row loading sweep." }
+    ],
+    "breakpoints": [
+      { "name": "lg", "value": "900px" },
+      { "name": "md", "value": "720px" },
+      { "name": "sm", "value": "560px" }
+    ],
+    "focusRing": { "value": "2px solid #6e9fff", "offset": "1px", "purpose": "Global :focus-visible outline on all interactive elements." }
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one committing action per surface (Connect & observe).",
+      "html": "<button class=\"ds-btn-primary\">Connect &amp; observe</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; gap: 7px; height: 32px; padding: 0 12px; background: #3d71d9; border: 1px solid #3d71d9; color: #fff; border-radius: 2px; font-family: Inter, system-ui, sans-serif; font-size: 14px; font-weight: 500; white-space: nowrap; cursor: pointer; transition: background 0.1s, border-color 0.1s; } .ds-btn-primary:hover { background: #5581e0; border-color: #5581e0; } .ds-btn-primary:focus-visible { outline: 2px solid #6e9fff; outline-offset: 1px; }"
+    },
+    {
+      "name": "Default Button",
+      "kind": "button",
+      "refersTo": "button",
+      "description": "Standard bordered action button on the dark canvas.",
+      "html": "<button class=\"ds-btn\">Refresh</button>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; gap: 7px; height: 32px; padding: 0 12px; background: transparent; border: 1px solid rgba(204,204,220,0.2); color: #ccccdc; border-radius: 2px; font-family: Inter, system-ui, sans-serif; font-size: 14px; font-weight: 500; white-space: nowrap; cursor: pointer; transition: background 0.1s, border-color 0.1s, color 0.1s; } .ds-btn:hover { background: rgba(204,204,220,0.07); border-color: rgba(204,204,220,0.3); } .ds-btn:focus-visible { outline: 2px solid #6e9fff; outline-offset: 1px; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Recessed field well; border shifts to blue on focus, no glow.",
+      "html": "<input class=\"ds-input\" placeholder=\"Search or jump to…\" />",
+      "css": ".ds-input { background: #0e0f13; border: 1px solid rgba(204,204,220,0.2); color: #ccccdc; border-radius: 2px; padding: 0 11px; height: 32px; font-family: Inter, system-ui, sans-serif; font-size: 14px; outline: none; transition: border-color 0.1s; } .ds-input::placeholder { color: rgba(204,204,220,0.58); } .ds-input:hover { border-color: rgba(204,204,220,0.3); } .ds-input:focus { border-color: #3d71d9; }"
+    },
+    {
+      "name": "Dashboard Panel",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "Flat, border-separated dashboard panel with a 34px header and hover-reveal actions.",
+      "html": "<div class=\"ds-panel\"><div class=\"ds-panel-head\"><span class=\"ds-panel-title\">tx count / min</span></div><div class=\"ds-panel-body\"><div class=\"ds-stat-value\">12,480<span class=\"ds-stat-unit\">tx</span></div></div></div>",
+      "css": ".ds-panel { background: #181b1f; border: 1px solid rgba(204,204,220,0.07); border-radius: 3px; display: flex; flex-direction: column; overflow: hidden; transition: border-color 0.1s; } .ds-panel:hover { border-color: rgba(204,204,220,0.12); } .ds-panel-head { display: flex; align-items: center; height: 34px; padding: 0 8px 0 12px; } .ds-panel-title { font-family: Inter, system-ui, sans-serif; font-size: 13px; font-weight: 500; color: #ccccdc; } .ds-panel-body { padding: 6px 10px 10px; } .ds-stat-value { font-family: 'Roboto Mono', ui-monospace, monospace; font-size: 42px; font-weight: 600; color: #ccccdc; line-height: 1.05; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; } .ds-stat-unit { font-size: 18px; color: rgba(204,204,220,0.65); margin-left: 5px; }"
+    },
+    {
+      "name": "Nav Item",
+      "kind": "nav",
+      "refersTo": "nav-item-active",
+      "description": "Left nav rail item; active state adds the orange→red brand bar on the left edge.",
+      "html": "<a class=\"ds-nav-item active\"><span class=\"ds-nav-icon\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 4v15a1 1 0 0 0 1 1h15\"/><path d=\"M7.5 15l3.5-4 3 2.5L20 7\"/></svg></span><span>Metrics</span></a>",
+      "css": ".ds-nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 2px; color: rgba(204,204,220,0.65); font-family: Inter, system-ui, sans-serif; font-size: 14px; text-decoration: none; position: relative; cursor: pointer; transition: background 0.1s, color 0.1s; } .ds-nav-item:hover { background: rgba(204,204,220,0.07); color: #ccccdc; } .ds-nav-item.active { background: rgba(204,204,220,0.09); color: #fff; font-weight: 500; } .ds-nav-item.active::before { content: ''; position: absolute; left: -8px; top: 6px; bottom: 6px; width: 3px; border-radius: 0 3px 3px 0; background: linear-gradient(135deg, #ff9830, #f2495c); } .ds-nav-icon { display: grid; place-items: center; }"
+    },
+    {
+      "name": "Sample Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Fully-round recent/example affordance on the raised surface.",
+      "html": "<button class=\"ds-chip\">Seaport (mainnet)</button>",
+      "css": ".ds-chip { display: inline-flex; align-items: center; gap: 7px; padding: 6px 12px; background: #22252b; border: 1px solid rgba(204,204,220,0.2); color: #ccccdc; border-radius: 999px; font-family: Inter, system-ui, sans-serif; font-size: 13px; cursor: pointer; transition: border-color 0.1s, background 0.1s; } .ds-chip:hover { border-color: rgba(204,204,220,0.3); background: rgba(204,204,220,0.06); }"
+    },
+    {
+      "name": "Environment Badge",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Saturated status badge tinted per environment (mainnet green shown).",
+      "html": "<span class=\"ds-env-badge\">mainnet</span>",
+      "css": ".ds-env-badge { display: inline-flex; align-items: center; font-family: Inter, system-ui, sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.02em; text-transform: uppercase; padding: 3px 8px; border-radius: 3px; color: #73bf69; background: rgba(115,191,105,0.16); border: 1px solid rgba(115,191,105,0.3); }"
+    },
+    {
+      "name": "Command Palette Item",
+      "kind": "custom",
+      "refersTo": "nav-item",
+      "description": "A row inside the ⌘K command palette; active row washes blue with a bright icon tile.",
+      "html": "<button class=\"ds-cmdk-item active\"><span class=\"ds-cmdk-item-icon\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"11\" cy=\"11\" r=\"7\"/><line x1=\"21\" y1=\"21\" x2=\"16.5\" y2=\"16.5\"/></svg></span><span class=\"ds-cmdk-item-label\">Go to Metrics</span><span class=\"ds-cmdk-item-group\">Nav</span></button>",
+      "css": ".ds-cmdk-item { display: flex; align-items: center; gap: 12px; width: 100%; padding: 9px 10px; background: none; border: none; border-radius: 2px; color: #ccccdc; text-align: left; font-family: Inter, system-ui, sans-serif; font-size: 14px; cursor: pointer; } .ds-cmdk-item.active { background: rgba(61,113,217,0.16); } .ds-cmdk-item-icon { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 2px; background: #181b1f; border: 1px solid rgba(204,204,220,0.12); color: rgba(204,204,220,0.65); flex: none; } .ds-cmdk-item.active .ds-cmdk-item-icon { color: #6e9fff; border-color: rgba(110,159,255,0.4); } .ds-cmdk-item-label { font-weight: 500; } .ds-cmdk-item-group { margin-left: auto; color: rgba(204,204,220,0.58); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Control Room",
+    "overview": "ChainSentry is Grafana rebuilt for smart contracts, and it wears that lineage without apology. This is the observability console a category-fluent operator trusts on sight: a near-black canvas, panels one shade lighter, hairline dividers, dense rows, and monospaced numbers that line up column-to-column. The tool disappears into the task. There is no hero imagery, no gradient stat cards, no glowing cyber-grid — the deliberate refusal of the 'web3 neon dashboard' default. Brand lives in precise chrome (a docked nav rail, a real command palette, a breadcrumb bar) rather than in decoration.\n\nDensity is a feature, not a compromise. Controls are 32px tall, panel headers 34px, the topbar and nav-brand a tight 44px. Type steps down to 11–13px in chrome and data tables so a full incident picture fits one viewport. Color is spent carefully: the surface is a five-step gray-blue ramp (canvas → panel → raised → overlay), text is a soft off-white (#ccccdc) dimmed by opacity rather than by new hex values, and saturated color appears only where it carries meaning — blue for interaction, the classic viz palette for data and status.\n\nThe voice is engineer-to-engineer: terse labels, terminal vernacular, values before prose. Every measurement, address, hash and timestamp is rendered in Roboto Mono with tabular figures; everything else is Inter. The result reads as native to anyone who already runs Prometheus, Grafana, or Loki.",
+    "keyCharacteristics": [
+      "Grafana-dark surface ramp: canvas #111217, panel #181b1f, raised #22252b, overlay #1d1f24.",
+      "Hairline borders (rgba(204,204,220,0.07–0.2)) do the separating; surfaces are flat.",
+      "Blue (#3d71d9) is the only chrome accent; the classic viz palette is reserved for data.",
+      "Inter for UI, Roboto Mono + tabular-nums for every value.",
+      "Small radii (2px controls, 3px panels), dense 32px controls, docked 244px nav rail."
+    ],
+    "rules": [
+      { "name": "The Chrome-Not-Decoration Rule", "body": "The only branded flourish is the orange→red gradient (linear-gradient(135deg, #ff9830, #f2495c)), and it appears in exactly two places: the 3px active-nav left bar and the wordmark. It never enters content, buttons, or panels.", "section": "colors" },
+      { "name": "The Signal-Color Rule", "body": "The classic viz palette (green/yellow/orange/red/purple/cyan) is reserved for data and status — chart series, env badges, alerts, trace-call typing. Never use a signal color for chrome, and never introduce a saturated color that isn't carrying a meaning.", "section": "colors" },
+      { "name": "The One Accent Rule", "body": "Blue (#3d71d9 fill, #6e9fff on text) is the sole interaction accent. If an element is blue, it is actionable, selected, or a link.", "section": "colors" },
+      { "name": "The Dim-By-Opacity Rule", "body": "Text and border hierarchy come from opacity steps on rgba(204,204,220,…), not from new gray hexes. Reach for text-2/text-3, not a new value.", "section": "colors" },
+      { "name": "The Mono-For-Data Rule", "body": "Every value, address, transaction hash, selector, gas figure, and timestamp is Roboto Mono with font-variant-numeric: tabular-nums. Prose, labels, and headings are Inter. If it's a number that can change, it's mono.", "section": "typography" },
+      { "name": "The Flat-Panel Rule", "body": "Content surfaces are flat and bordered. Shadows only appear on layers that literally float above the page (modal, palette, tooltip, drawer). A dashboard panel never casts a shadow.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do build on the surface ramp — canvas #111217 for chrome, panel #181b1f for content, raised #22252b for the next lift, overlay #1d1f24 for floating layers.",
+      "Do render every value, address, hash, and timestamp in Roboto Mono with tabular-nums; keep prose and labels in Inter.",
+      "Do keep controls at 32px, radii at 2px (controls) / 3px (panels), and separate surfaces with 1px hairline borders.",
+      "Do reserve blue (#3d71d9 / #6e9fff) for interaction and the classic viz palette for data and status.",
+      "Do derive text and border hierarchy from opacity steps on rgba(204,204,220,…)."
+    ],
+    "donts": [
+      "Don't add drop shadows to resting content; only genuinely floating layers (modal, palette, tooltip, drawer) cast shadows.",
+      "Don't spend a signal color on chrome, or introduce a saturated hue that doesn't carry meaning — no gradient stat cards, no neon glow, no cyber-grid.",
+      "Don't let the orange→red brand gradient leave the active-nav bar and wordmark.",
+      "Don't round controls past their scale — no pill-shaped buttons, no large radii on panels (999px is only for chips, counts, and status dots).",
+      "Don't use a filled glyph set or icon font; icons are the custom 1.9px stroked line set on a 24×24 grid."
+    ]
+  }
+}

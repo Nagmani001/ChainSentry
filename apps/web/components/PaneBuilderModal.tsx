@@ -9,6 +9,7 @@ import type {
   VizType,
 } from "../lib/types";
 import { PanelChart } from "./PanelChart";
+import { Icon } from "./Icon";
 
 const VIZ_OPTIONS: VizType[] = [
   "line",
@@ -101,10 +102,10 @@ export function PaneBuilderModal({
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-head">
-          {initial ? "Edit panel" : "Pane builder"}
+          <span className="modal-title">{initial ? "Edit panel" : "Pane builder"}</span>
           <div className="spacer" />
-          <button className="icon-btn" onClick={onClose}>
-            ✕
+          <button className="icon-btn" onClick={onClose} aria-label="Close">
+            <Icon name="close" size={16} />
           </button>
         </div>
         <div className="modal-body">

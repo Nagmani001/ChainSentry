@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { api } from "../lib/api";
 import type { Panel, QueryResult } from "../lib/types";
 import { PanelChart } from "./PanelChart";
+import { Icon } from "./Icon";
 
 export function PanelCard({
   panel,
@@ -44,19 +45,24 @@ export function PanelCard({
   return (
     <div className={`panel ${editMode ? "editing" : ""}`}>
       <div className="panel-head">
-        {editMode ? <span className="panel-drag panel-drag-handle">⠿</span> : null}
+        {editMode ? (
+          <span className="panel-drag panel-drag-handle" title="Drag to move">
+            <Icon name="grip" size={15} />
+          </span>
+        ) : null}
         <span className="panel-title">{panel.title}</span>
+        {loading ? <span className="panel-loading-dot" /> : null}
         <div className="panel-actions">
           <button className="icon-btn" title="Refresh" onClick={load}>
-            ↻
+            <Icon name="sync" size={15} />
           </button>
           {editMode ? (
             <>
               <button className="icon-btn" title="Edit" onClick={onEdit}>
-                ✎
+                <Icon name="edit" size={15} />
               </button>
-              <button className="icon-btn" title="Remove" onClick={onDelete}>
-                ✕
+              <button className="icon-btn danger" title="Remove" onClick={onDelete}>
+                <Icon name="trash" size={15} />
               </button>
             </>
           ) : null}

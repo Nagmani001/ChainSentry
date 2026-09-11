@@ -4,8 +4,8 @@ import { useMemo } from "react";
 import {
   Responsive,
   useContainerWidth,
+  verticalCompactor,
   type Layout,
-  type LayoutItem,
 } from "react-grid-layout";
 import type { Panel } from "../lib/types";
 import { PanelCard } from "./PanelCard";
@@ -23,7 +23,7 @@ export function DashboardGrid({
   params: Record<string, unknown>;
   refreshTick: number;
   editMode: boolean;
-  onLayoutChange: (layout: LayoutItem[]) => void;
+  onLayoutChange: (layout: Layout) => void;
   onEditPanel: (id: string) => void;
   onDeletePanel: (id: string) => void;
 }) {
@@ -54,11 +54,10 @@ export function DashboardGrid({
           cols={{ lg: 12, md: 12, sm: 6 }}
           rowHeight={38}
           margin={[14, 14]}
-          isDraggable={editMode}
-          isResizable={editMode}
-          draggableHandle=".panel-drag-handle"
-          onLayoutChange={(l: Layout) => editMode && onLayoutChange(l)}
-          compactType="vertical"
+          dragConfig={{ enabled: editMode, handle: ".panel-drag-handle" }}
+          resizeConfig={{ enabled: editMode }}
+          compactor={verticalCompactor}
+          onLayoutChange={(l) => editMode && onLayoutChange(l)}
         >
           {panels.map((p) => (
             <div key={p.id}>
