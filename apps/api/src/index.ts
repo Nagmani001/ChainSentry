@@ -10,6 +10,24 @@ import { runReadOnlyQuery } from "./rawQuery.js";
 import { ensureDefaultDashboards } from "./dashboards.js";
 import { runAgent, runIncidentAgent } from "./agent.js";
 import { env } from "./env.js";
+import {
+  createAlertRule,
+  createOnCallSlot,
+  createOrg,
+  createOrgSchema,
+  createRuleSchema,
+  createSlotSchema,
+  evaluateAlertRule,
+  getAlertingContext,
+  issueActionSchema,
+  joinOrg,
+  joinOrgSchema,
+  listOrgData,
+  resolveIssue,
+  syncUser,
+  userSchema,
+  verifyIssue,
+} from "./alerting.js";
 
 const app: Express = express();
 app.use(cors({ origin: env.corsOrigin }));
@@ -48,6 +66,127 @@ const createContractSchema = z.object({
 
 app.get("/health", (_req: Request, res: Response) => {
   res.json({ status: "ok" });
+});
+
+app.post("/auth/sync", async (req: Request, res: Response) => {
+  const parsed = userSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error.flatten() });
+  }
+  try {
+    const user = await syncUser(parsed.data);
+    return res.status(201).json(user);
+  } catch (err) {
+    return res.status(500).json({ error: (err as Error).message });
+  }
+});
+
+app.get("/alerting/context", async (req: Request, res: Response) => {
+  const privyId = queryString(req.query.privyId);
+  if (!privyId) return res.status(400).json({ error: "privyId is required" });
+  try {
+    return res.json(await getAlertingContext(privyId));
+  } catch (err) {
+    return res.status(500).json({ error: (err as Error).message });
+  }
+});
+
+app.post("/orgs", async (req: Request, res: Response) => {
+  const parsed = createOrgSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error.flatten() });
+  }
+  try {
+    return res.status(201).json(await createOrg(parsed.data));
+  } catch (err) {
+    return res.status(400).json({ error: (err as Error).message });
+  }
+});
+
+app.post("/orgs/join", async (req: Request, res: Response) => {
+  const parsed = joinOrgSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error.flatten() });
+  }
+  try {
+    return res.status(201).json(await joinOrg(parsed.data));
+  } catch (err) {
+    return res.status(400).json({ error: (err as Error).message });
+  }
+});
+
+app.get("/orgs/:id/alerting", async (req: Request, res: Response) => {
+  const orgId = routeParam(req, "id");
+  const privyId = queryString(req.query.privyId);
+  if (!privyId) return res.status(400).json({ error: "privyId is required" });
+  try {
+    return res.json(await listOrgData(orgId, privyId));
+  } catch (err) {
+    return res.status(400).json({ error: (err as Error).message });
+  }
+});
+
+app.post("/orgs/:id/on-call", async (req: Request, res: Response) => {
+  const orgId = routeParam(req, "id");
+  const parsed = createSlotSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error.flatten() });
+  }
+  try {
+    return res.status(201).json(await createOnCallSlot(orgId, parsed.data));
+  } catch (err) {
+    return res.status(400).json({ error: (err as Error).message });
+  }
+});
+
+app.post("/orgs/:id/alerts", async (req: Request, res: Response) => {
+  const orgId = routeParam(req, "id");
+  const parsed = createRuleSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error.flatten() });
+  }
+  try {
+    return res.status(201).json(await createAlertRule(orgId, parsed.data));
+  } catch (err) {
+    return res.status(400).json({ error: (err as Error).message });
+  }
+});
+
+app.post("/alerts/:id/evaluate", async (req: Request, res: Response) => {
+  const id = routeParam(req, "id");
+  const privyId = typeof req.body?.privyId === "string" ? req.body.privyId : "";
+  if (!privyId) return res.status(400).json({ error: "privyId is required" });
+  try {
+    return res.json(await evaluateAlertRule(id, privyId));
+  } catch (err) {
+    return res.status(400).json({ error: (err as Error).message });
+  }
+});
+
+app.post("/issues/:id/resolve", async (req: Request, res: Response) => {
+  const id = routeParam(req, "id");
+  const parsed = issueActionSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error.flatten() });
+  }
+  try {
+    return res.json(await resolveIssue(id, parsed.data));
+  } catch (err) {
+    return res.status(400).json({ error: (err as Error).message });
+  }
+});
+
+app.post("/issues/:id/verify", async (req: Request, res: Response) => {
+  const id = routeParam(req, "id");
+  const parsed = issueActionSchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({ error: parsed.error.flatten() });
+  }
+  try {
+    return res.json(await verifyIssue(id, parsed.data));
+  } catch (err) {
+    return res.status(400).json({ error: (err as Error).message });
+  }
 });
 
 app.post("/contracts", async (req: Request, res: Response) => {

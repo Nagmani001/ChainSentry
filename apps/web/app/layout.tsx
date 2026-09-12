@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Roboto_Mono } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "../components/AppShell";
+import { PrivyShell } from "../components/PrivyShell";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -30,7 +31,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} ${robotoMono.variable}`}>
       <body>
-        <AppShell>{children}</AppShell>
+        <PrivyShell>
+          <AppShell>{children}</AppShell>
+        </PrivyShell>
       </body>
     </html>
   );

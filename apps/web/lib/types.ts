@@ -77,3 +77,80 @@ export interface IncidentResult {
   answer: string;
   steps: { sql: string; rowCount: number }[];
 }
+
+export interface AuthUser {
+  id: string;
+  privyId: string;
+  email: string | null;
+  name: string | null;
+  phone: string | null;
+}
+
+export interface OrgMember {
+  id: string;
+  role: string;
+  user: AuthUser;
+}
+
+export interface Organization {
+  id: string;
+  name: string;
+  ownerUserId: string;
+  owner?: AuthUser;
+  members: OrgMember[];
+}
+
+export interface AlertRule {
+  id: string;
+  orgId: string;
+  contractId: string | null;
+  name: string;
+  metric: string;
+  operator: string;
+  threshold: number;
+  windowMin: number;
+  channel: "email" | "call";
+  active: boolean;
+  contract?: Contract | null;
+}
+
+export interface OnCallSlot {
+  id: string;
+  orgId: string;
+  userId: string;
+  startsAt: string;
+  endsAt: string;
+  user: AuthUser;
+}
+
+export interface AlertIssue {
+  id: string;
+  orgId: string;
+  ruleId: string;
+  assigneeId: string | null;
+  status: "open" | "resolved" | "verified";
+  severity: string;
+  observedValue: number;
+  threshold: number;
+  message: string;
+  resolvedAt: string | null;
+  verifiedAt: string | null;
+  incentiveWei: string | null;
+  incentiveTx: string | null;
+  rule: AlertRule;
+  assignee?: AuthUser | null;
+  resolvedBy?: AuthUser | null;
+  verifiedBy?: AuthUser | null;
+}
+
+export interface AlertingContext {
+  user: AuthUser | null;
+  orgs: Organization[];
+  contracts: Contract[];
+}
+
+export interface OrgAlertingData {
+  rules: AlertRule[];
+  slots: OnCallSlot[];
+  issues: AlertIssue[];
+}

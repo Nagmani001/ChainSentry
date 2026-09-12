@@ -9,6 +9,8 @@ export type IconName =
   | "logs"
   | "traces"
   | "incident"
+  | "bell"
+  | "issues"
   | "help"
   | "chevronDown"
   | "chevronRight"
@@ -88,6 +90,19 @@ const PATHS: Record<IconName, React.ReactNode> = {
       <path d="M18 14l.8 1.8L21 17l-2.2.9L18 20l-.8-2L15 17l2.2-1z" />
     </>
   ),
+  bell: (
+    <>
+      <path d="M6.5 10a5.5 5.5 0 0 1 11 0c0 4 1.5 5.5 2.5 6H4c1-.5 2.5-2 2.5-6" />
+      <path d="M10 19a2 2 0 0 0 4 0" />
+    </>
+  ),
+  issues: (
+    <>
+      <circle cx="12" cy="12" r="8" />
+      <path d="M12 7v6" />
+      <line x1="12" y1="17" x2="12.01" y2="17" />
+    </>
+  ),
   help: (
     <>
       <circle cx="12" cy="12" r="9" />
@@ -117,7 +132,9 @@ const PATHS: Record<IconName, React.ReactNode> = {
       <line x1="5" y1="12" x2="19" y2="12" />
     </>
   ),
-  star: <path d="M12 4l2.4 4.9 5.4.8-3.9 3.8.9 5.4L12 16.9 7.2 19l.9-5.4L4.2 9.7l5.4-.8z" />,
+  star: (
+    <path d="M12 4l2.4 4.9 5.4.8-3.9 3.8.9 5.4L12 16.9 7.2 19l.9-5.4L4.2 9.7l5.4-.8z" />
+  ),
   user: (
     <>
       <circle cx="12" cy="8" r="4" />

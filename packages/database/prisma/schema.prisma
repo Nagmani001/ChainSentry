@@ -33,8 +33,107 @@ model Contract {
   createdAt   DateTime       @default(now())
   deployments Deployment[]
   jobs        IngestionJob[]
+  alertRules  AlertRule[]
 
   @@unique([address, chainId])
+}
+
+model User {
+  id             String         @id @default(cuid())
+  privyId        String         @unique
+  email          String?
+  name           String?
+  phone          String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  ownedOrgs      Organization[] @relation("OrgOwner")
+  memberships    OrgMember[]
+  onCallSlots    OnCallSlot[]
+  createdRules   AlertRule[]    @relation("AlertRuleCreator")
+  assignedIssues AlertIssue[]   @relation("IssueAssignee")
+  resolvedIssues AlertIssue[]   @relation("IssueResolver")
+  verifiedIssues AlertIssue[]   @relation("IssueVerifier")
+}
+
+model Organization {
+  id          String       @id @default(cuid())
+  name        String
+  ownerUserId String
+  owner       User         @relation("OrgOwner", fields: [ownerUserId], references: [id], onDelete: Cascade)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  members     OrgMember[]
+  onCallSlots OnCallSlot[]
+  alertRules  AlertRule[]
+  issues      AlertIssue[]
+}
+
+model OrgMember {
+  id        String       @id @default(cuid())
+  orgId     String
+  userId    String
+  role      String       @default("member")
+  createdAt DateTime     @default(now())
+  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, userId])
+}
+
+model OnCallSlot {
+  id        String       @id @default(cuid())
+  orgId     String
+  userId    String
+  startsAt  DateTime
+  endsAt    DateTime
+  createdAt DateTime     @default(now())
+  org       Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AlertRule {
+  id          String       @id @default(cuid())
+  orgId       String
+  contractId  String?
+  createdById String
+  name        String
+  metric      String
+  operator    String
+  threshold   Float
+  windowMin   Int          @default(15)
+  channel     String
+  active      Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  org         Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  contract    Contract?    @relation(fields: [contractId], references: [id], onDelete: SetNull)
+  createdBy   User         @relation("AlertRuleCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  issues      AlertIssue[]
+}
+
+model AlertIssue {
+  id            String       @id @default(cuid())
+  orgId         String
+  ruleId        String
+  assigneeId    String?
+  status        String       @default("open")
+  severity      String       @default("critical")
+  observedValue Float
+  threshold     Float
+  message       String
+  resolvedById  String?
+  resolvedAt    DateTime?
+  verifiedById  String?
+  verifiedAt    DateTime?
+  incentiveWei  String?
+  incentiveTx   String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  org           Organization @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  rule          AlertRule    @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  assignee      User?        @relation("IssueAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+  resolvedBy    User?        @relation("IssueResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
+  verifiedBy    User?        @relation("IssueVerifier", fields: [verifiedById], references: [id], onDelete: SetNull)
 }
 
 model Deployment {
@@ -56,15 +155,15 @@ model Deployment {
 }
 
 model Dashboard {
-  id          String   @id @default(cuid())
-  name        String
-  slug        String   @unique
-  section     String   @default("metrics")
-  contractId  String?
-  spec        Json
-  isDefault   Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(cuid())
+  name       String
+  slug       String   @unique
+  section    String   @default("metrics")
+  contractId String?
+  spec       Json
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 model IngestionJob {

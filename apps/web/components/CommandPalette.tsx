@@ -13,12 +13,62 @@ interface Command {
 }
 
 const COMMANDS: Command[] = [
-  { label: "Home", hint: "Connect a contract", href: "/", icon: "home", group: "Navigation" },
-  { label: "Metrics", hint: "Time-series dashboards", href: "/metrics", icon: "chart", group: "Dashboards" },
-  { label: "Logs", hint: "Decoded event stream", href: "/logs", icon: "logs", group: "Dashboards" },
-  { label: "Traces", hint: "Internal call trees", href: "/traces", icon: "traces", group: "Dashboards" },
-  { label: "Incident agent", hint: "Ask about anomalies", href: "/incident", icon: "incident", group: "Navigation" },
-  { label: "Connect a contract", hint: "Add a data source", href: "/", icon: "plus", group: "Actions" },
+  {
+    label: "Home",
+    hint: "Connect a contract",
+    href: "/",
+    icon: "home",
+    group: "Navigation",
+  },
+  {
+    label: "Metrics",
+    hint: "Time-series dashboards",
+    href: "/metrics",
+    icon: "chart",
+    group: "Dashboards",
+  },
+  {
+    label: "Logs",
+    hint: "Decoded event stream",
+    href: "/logs",
+    icon: "logs",
+    group: "Dashboards",
+  },
+  {
+    label: "Traces",
+    hint: "Internal call trees",
+    href: "/traces",
+    icon: "traces",
+    group: "Dashboards",
+  },
+  {
+    label: "Alerting",
+    hint: "Rules and on-call",
+    href: "/alerts",
+    icon: "bell",
+    group: "Operations",
+  },
+  {
+    label: "Issues",
+    hint: "Resolve triggered alerts",
+    href: "/issues",
+    icon: "issues",
+    group: "Operations",
+  },
+  {
+    label: "Incident agent",
+    hint: "Ask about anomalies",
+    href: "/incident",
+    icon: "incident",
+    group: "Navigation",
+  },
+  {
+    label: "Connect a contract",
+    hint: "Add a data source",
+    href: "/",
+    icon: "plus",
+    group: "Actions",
+  },
 ];
 
 export function CommandPalette({

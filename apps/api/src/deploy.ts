@@ -79,14 +79,12 @@ async function installDeps(projectPath: string): Promise<void> {
   try {
     await access(join(projectPath, "node_modules"));
     return;
-  } catch {
-    /* node_modules missing, install below */
-  }
-  await run(
-    "npm",
-    ["install", "--no-audit", "--no-fund", "--ignore-scripts"],
-    { cwd: projectPath, timeout: 300000, maxBuffer: 10 * 1024 * 1024 },
-  );
+  } catch {}
+  await run("npm", ["install", "--no-audit", "--no-fund", "--ignore-scripts"], {
+    cwd: projectPath,
+    timeout: 300000,
+    maxBuffer: 10 * 1024 * 1024,
+  });
 }
 
 export async function deploySubgraph(
@@ -94,7 +92,8 @@ export async function deploySubgraph(
 ): Promise<DeployResult> {
   const projectPath = await writeProject(input);
   const slug =
-    env.graphSubgraphSlug || `${input.contractName.toLowerCase()}-${input.network}`;
+    env.graphSubgraphSlug ||
+    `${input.contractName.toLowerCase()}-${input.network}`;
 
   if (env.graphNodeUrl) {
     const ipfs = env.ipfsUrl || "http://localhost:5001";

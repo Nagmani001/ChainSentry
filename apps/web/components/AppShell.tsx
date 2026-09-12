@@ -30,6 +30,8 @@ const NAV: NavGroup[] = [
       { label: "Traces", href: "/traces", icon: "traces" },
     ],
   },
+  { label: "Alerting", href: "/alerts", icon: "bell" },
+  { label: "Issues", href: "/issues", icon: "issues" },
   { label: "Incident agent", href: "/incident", icon: "incident" },
 ];
 
@@ -38,6 +40,8 @@ const CRUMBS: Record<string, string[]> = {
   "/metrics": ["Dashboards", "Metrics"],
   "/logs": ["Dashboards", "Logs"],
   "/traces": ["Dashboards", "Traces"],
+  "/alerts": ["Alerting"],
+  "/issues": ["Issues"],
   "/incident": ["Incident agent"],
 };
 
@@ -69,7 +73,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="nav-brand">
           <Link href="/" className="brand" aria-label="ChainSentry home">
             <span className="brand-mark">
-              <svg viewBox="0 0 32 32" width="26" height="26" aria-hidden="true">
+              <svg
+                viewBox="0 0 32 32"
+                width="26"
+                height="26"
+                aria-hidden="true"
+              >
                 <defs>
                   <linearGradient id="cs-mark" x1="0" y1="0" x2="1" y2="1">
                     <stop offset="0" stopColor="#ff9830" />
@@ -133,7 +142,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     aria-label="Toggle Dashboards"
                     aria-expanded={dashOpen}
                   >
-                    <Icon name={dashOpen ? "chevronDown" : "chevronRight"} size={16} />
+                    <Icon
+                      name={dashOpen ? "chevronDown" : "chevronRight"}
+                      size={16}
+                    />
                   </button>
                 </div>
                 {dashOpen ? (
@@ -201,7 +213,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             {crumbs.map((c, i) => (
               <span className="crumb-part" key={c}>
                 {i > 0 ? <span className="crumb-sep">/</span> : null}
-                <span className={`crumb ${i === crumbs.length - 1 ? "current" : ""}`}>
+                <span
+                  className={`crumb ${i === crumbs.length - 1 ? "current" : ""}`}
+                >
                   {c}
                 </span>
               </span>
@@ -231,7 +245,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="page">{children}</div>
       </div>
 
-      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
+      <CommandPalette
+        open={paletteOpen}
+        onClose={() => setPaletteOpen(false)}
+      />
     </div>
   );
 }
