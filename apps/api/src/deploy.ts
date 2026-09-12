@@ -57,7 +57,10 @@ async function writeProject(input: DeployInput): Promise<string> {
       join(projectPath, "abis", `${input.contractName}.json`),
       JSON.stringify(input.abi, null, 2),
     ),
-    writeFile(join(projectPath, "package.json"), packageJson(input.contractName)),
+    writeFile(
+      join(projectPath, "package.json"),
+      packageJson(input.contractName),
+    ),
   ]);
 
   return projectPath;
@@ -72,7 +75,9 @@ async function graph(projectPath: string, args: string[]): Promise<string> {
   return `${stdout}\n${stderr}`.trim();
 }
 
-export async function deploySubgraph(input: DeployInput): Promise<DeployResult> {
+export async function deploySubgraph(
+  input: DeployInput,
+): Promise<DeployResult> {
   const projectPath = await writeProject(input);
   const slug = `${input.contractName.toLowerCase()}-${input.network}`;
 
@@ -95,7 +100,7 @@ export async function deploySubgraph(input: DeployInput): Promise<DeployResult> 
         "--ipfs",
         ipfs,
         "--version-label",
-        "v0.0.1",
+        env.graphVersionLabel,
       ]);
       return {
         projectPath,
@@ -126,14 +131,17 @@ export async function deploySubgraph(input: DeployInput): Promise<DeployResult> 
         "--deploy-key",
         env.graphDeployKey,
         "--version-label",
-        "v0.0.1",
+        env.graphVersionLabel,
       ]);
+      const queryUrl = env.graphStudioId
+        ? `https://api.studio.thegraph.com/query/${env.graphStudioId}/${slug}/${env.graphVersionLabel}`
+        : null;
       return {
         projectPath,
         status: "deployed",
         target: "subgraph-studio",
         message: out.slice(-2000),
-        queryUrl: `https://api.studio.thegraph.com/query/<studio-id>/${slug}/v0.0.1`,
+        queryUrl,
       };
     } catch (err) {
       return {
@@ -151,7 +159,7 @@ export async function deploySubgraph(input: DeployInput): Promise<DeployResult> 
     status: "generated",
     target: "disk",
     message:
-      "Deployable subgraph project written to disk. Set GRAPH_NODE_URL (+IPFS_URL) to deploy to a local graph-node, or GRAPH_DEPLOY_KEY to publish to Subgraph Studio. ChainSentry's RPC ingester is already streaming this contract's data into ClickHouse.",
+      "Deployable subgraph project written to disk. Set GRAPH_NODE_URL (+IPFS_URL) or GRAPH_DEPLOY_KEY to deploy it, then ChainSentry will ingest blockchain data from the subgraph query endpoint into ClickHouse.",
     queryUrl: null,
   };
 }

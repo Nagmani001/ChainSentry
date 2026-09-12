@@ -1,14 +1,11 @@
 import { getAddress, type Abi } from "viem";
-import { prisma, getRpcClient } from "./clients.js";
+import { prisma } from "./clients.js";
 import { resolveChain } from "./chains.js";
 import { fetchAbi, extractEvents } from "./abi.js";
 import { parsePrompt } from "./prompt.js";
-import { findDeployBlock } from "./deployBlock.js";
 import { generateConfig } from "./configgen.js";
 import { deploySubgraph } from "./deploy.js";
 import { ingestContract } from "./ingest.js";
-
-const DEFAULT_LOOKBACK = 5000n;
 
 export interface PipelineInput {
   address: string;
@@ -17,7 +14,6 @@ export interface PipelineInput {
   abi?: unknown;
   fromBlock?: number;
   toBlock?: number;
-  maxBlocks?: number;
   sync?: boolean;
 }
 
@@ -27,7 +23,7 @@ function sanitizeName(name: string | undefined): string {
   return clean.length > 0 ? clean : "Contract";
 }
 
-export async function runPipeline(input: PipelineInput) {
+export async function runPipeline(input: PipelineInput): Promise<any> {
   const chain = resolveChain(input.environment);
   const address = getAddress(input.address);
   const lowerAddress = address.toLowerCase();
@@ -41,24 +37,11 @@ export async function runPipeline(input: PipelineInput) {
 
   const plan = parsePrompt(input.prompt, allEvents);
 
-  const client = getRpcClient(chain);
-  const head = await client.getBlockNumber();
-  const deployBlock = await findDeployBlock(client, address as `0x${string}`, head);
-
-  const lookback = input.maxBlocks != null ? BigInt(input.maxBlocks) : DEFAULT_LOOKBACK;
-  const toBlock = input.toBlock != null ? BigInt(input.toBlock) : head;
-  let fromBlock: bigint;
-  if (input.fromBlock != null) {
-    fromBlock = BigInt(input.fromBlock);
-  } else if (deployBlock != null) {
-    const floor = toBlock > lookback ? toBlock - lookback : 0n;
-    fromBlock = deployBlock > floor ? deployBlock : floor;
-  } else {
-    fromBlock = toBlock > lookback ? toBlock - lookback : 0n;
-  }
+  const fromBlock = input.fromBlock != null ? BigInt(input.fromBlock) : 0n;
+  const toBlock = input.toBlock != null ? BigInt(input.toBlock) : null;
 
   const contractName = sanitizeName(abiResult.name);
-  const configStartBlock = Number(deployBlock ?? fromBlock);
+  const configStartBlock = Number(fromBlock);
   const config = generateConfig({
     contractName,
     address,
@@ -68,19 +51,21 @@ export async function runPipeline(input: PipelineInput) {
   });
 
   const contract = await prisma.contract.upsert({
-    where: { address_chainId: { address: lowerAddress, chainId: chain.chainId } },
+    where: {
+      address_chainId: { address: lowerAddress, chainId: chain.chainId },
+    },
     create: {
       address: lowerAddress,
       chainId: chain.chainId,
       environment: chain.environment,
       name: abiResult.name ?? null,
       abi: abi as object[],
-      deployBlock: deployBlock ?? null,
+      deployBlock: null,
     },
     update: {
       abi: abi as object[],
       name: abiResult.name ?? null,
-      deployBlock: deployBlock ?? null,
+      deployBlock: null,
     },
   });
 
@@ -129,11 +114,15 @@ export async function runPipeline(input: PipelineInput) {
         where: { id: job.id },
         data: { status: "indexing" },
       });
+      if (!updatedDeployment.queryUrl) {
+        throw new Error(
+          "Subgraph was not deployed with a query URL. Configure GRAPH_NODE_URL or GRAPH_DEPLOY_KEY plus GRAPH_STUDIO_ID before indexing.",
+        );
+      }
       const result = await ingestContract({
         chain,
         address: lowerAddress,
-        abi,
-        selectedEvents: plan.selectedEvents,
+        queryUrl: updatedDeployment.queryUrl,
         includeTransactions: plan.includeTransactions,
         fromBlock,
         toBlock,
@@ -183,7 +172,7 @@ export async function runPipeline(input: PipelineInput) {
     chain,
     abiSource: abiResult.source,
     contractName,
-    deployBlock,
+    deployBlock: null,
     fromBlock,
     toBlock,
     plan,

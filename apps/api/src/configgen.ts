@@ -1,5 +1,7 @@
-import type { AbiEventParameter } from "viem";
+import type { AbiParameter } from "viem";
 import type { EventInfo } from "./abi.js";
+
+type EventParameter = AbiParameter & { indexed?: boolean };
 
 export interface GeneratedConfig {
   subgraphYaml: string;
@@ -30,7 +32,8 @@ function solidityToGraphQL(type: string): string {
 }
 
 function solidityToAscType(type: string): string {
-  if (type.endsWith("[]")) return `Array<${solidityToAscType(type.slice(0, -2))}>`;
+  if (type.endsWith("[]"))
+    return `Array<${solidityToAscType(type.slice(0, -2))}>`;
   if (type === "address") return "Bytes";
   if (type === "bool") return "boolean";
   if (type === "string") return "string";
@@ -39,8 +42,16 @@ function solidityToAscType(type: string): string {
   return "string";
 }
 
-function fieldName(input: AbiEventParameter, index: number): string {
+function fieldName(input: EventParameter, index: number): string {
   return input.name && input.name.length > 0 ? input.name : `param${index}`;
+}
+
+function paramToString(type: string, value: string): string {
+  if (type === "address" || type === "bytes" || /^bytes\d+$/.test(type)) {
+    return `${value}.toHexString()`;
+  }
+  if (type.endsWith("[]") || type.startsWith("tuple")) return `""`;
+  return `${value}.toString()`;
 }
 
 function uniqueEntityName(base: string, used: Set<string>): string {
@@ -59,10 +70,10 @@ export function generateConfig(params: {
   selectedEvents: EventInfo[];
 }): GeneratedConfig {
   const { contractName, address, network, startBlock, selectedEvents } = params;
-  const usedEntities = new Set<string>();
+  const usedEntities = new Set<string>(["ChainSentryEvent"]);
 
   const perEvent = selectedEvents.map((ev) => {
-    const inputs = ev.item.inputs as readonly AbiEventParameter[];
+    const inputs = ev.item.inputs as readonly EventParameter[];
     const manifestSig = `${ev.name}(${inputs
       .map((i) => `${i.indexed ? "indexed " : ""}${i.type}`)
       .join(",")})`;
@@ -80,7 +91,10 @@ export function generateConfig(params: {
   const entityNames = perEvent.map((e) => e.entity);
 
   const eventHandlers = perEvent
-    .map((e) => `        - event: ${e.manifestSig}\n          handler: ${e.handler}`)
+    .map(
+      (e) =>
+        `        - event: ${e.manifestSig}\n          handler: ${e.handler}`,
+    )
     .join("\n");
 
   const subgraphYaml = `specVersion: 1.0.0
@@ -100,7 +114,7 @@ dataSources:
       apiVersion: 0.0.9
       language: wasm/assemblyscript
       entities:
-${entityNames.map((n) => `        - ${n}`).join("\n")}
+${[...entityNames, "ChainSentryEvent"].map((n) => `        - ${n}`).join("\n")}
       abis:
         - name: ${contractName}
           file: ./abis/${contractName}.json
@@ -127,13 +141,20 @@ ${fieldLines}
   const imports = `import { ${perEvent
     .map((e) => `${e.ev.name} as ${e.entity}Event`)
     .join(", ")} } from "../generated/${contractName}/${contractName}"
-import { ${entityNames.join(", ")} } from "../generated/schema"`;
+import { ${[...entityNames, "ChainSentryEvent"].join(", ")} } from "../generated/schema"`;
 
   const handlers = perEvent
     .map((e) => {
       const assigns = e.fields
         .map((f) => `  entity.${f.name} = event.params.${f.name}`)
         .join("\n");
+      const argPairs = e.fields
+        .map(
+          (f) =>
+            `jsonPair("${f.name}", ${paramToString(f.solidityType, `event.params.${f.name}`)})`,
+        )
+        .join(` + "," + `);
+      const args = argPairs.length > 0 ? `"{" + ${argPairs} + "}"` : `"{}"`;
       return `export function ${e.handler}(event: ${e.entity}Event): void {
   let entity = new ${e.entity}(
     event.transaction.hash.concatI32(event.logIndex.toI32())
@@ -143,14 +164,64 @@ ${assigns}
   entity.blockTimestamp = event.block.timestamp
   entity.transactionHash = event.transaction.hash
   entity.save()
+
+  let normalized = new ChainSentryEvent(
+    event.transaction.hash.concatI32(event.logIndex.toI32())
+  )
+  normalized.contractAddress = event.address
+  normalized.blockNumber = event.block.number
+  normalized.blockTimestamp = event.block.timestamp
+  normalized.transactionHash = event.transaction.hash
+  normalized.transactionIndex = event.transaction.index
+  normalized.logIndex = event.logIndex
+  normalized.eventName = "${e.ev.name}"
+  normalized.eventSignature = "${e.ev.signature}"
+  normalized.topic0 = "${e.ev.topic0}"
+  normalized.args = ${args}
+  normalized.from = event.transaction.from
+  normalized.to = event.transaction.to
+  normalized.value = event.transaction.value
+  normalized.gasPrice = event.transaction.gasPrice
+  normalized.gasLimit = event.transaction.gasLimit
+  normalized.input = event.transaction.input
+  normalized.save()
 }`;
     })
     .join("\n\n");
 
   const mappingsTs = `${imports}
 
+function jsonPair(name: string, value: string): string {
+  return '"' + name + '":"' + value + '"'
+}
+
 ${handlers}
 `;
 
-  return { subgraphYaml, schemaGraphql, mappingsTs, entityNames };
+  const normalizedSchema = `type ChainSentryEvent @entity(immutable: true) {
+  id: Bytes!
+  contractAddress: Bytes!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+  transactionIndex: BigInt!
+  logIndex: BigInt!
+  eventName: String!
+  eventSignature: String!
+  topic0: String!
+  args: String!
+  from: Bytes!
+  to: Bytes
+  value: BigInt!
+  gasPrice: BigInt!
+  gasLimit: BigInt!
+  input: Bytes!
+}`;
+
+  return {
+    subgraphYaml,
+    schemaGraphql: `${schemaGraphql}\n\n${normalizedSchema}`,
+    mappingsTs,
+    entityNames,
+  };
 }

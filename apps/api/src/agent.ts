@@ -21,7 +21,7 @@ TABLE transactions:
   gas_used UInt64, gas_price UInt64, effective_gas_price UInt64,
   status UInt8 (1 = success, 0 = revert), method_selector String
 
-TABLE traces (internal call frames from debug_traceTransaction):
+TABLE traces (Graph-indexed call/correlation data when available):
   chain_id UInt32, contract_address String, block_number UInt64, block_timestamp DateTime,
   tx_hash String, tx_index UInt32,
   trace_address String (dotted path within the call tree, e.g. "0.1.2"; root is ""),
@@ -118,7 +118,10 @@ export async function runAgent(ctx: AgentContext): Promise<AgentResult> {
     );
   }
   const ai = new GoogleGenAI({ apiKey: env.geminiApiKey });
-  const params = { addr: ctx.contractAddress.toLowerCase(), chain: ctx.chainId };
+  const params = {
+    addr: ctx.contractAddress.toLowerCase(),
+    chain: ctx.chainId,
+  };
 
   const sectionHint =
     ctx.section === "logs"
@@ -258,7 +261,10 @@ export async function runIncidentAgent(
     );
   }
   const ai = new GoogleGenAI({ apiKey: env.geminiApiKey });
-  const params = { addr: ctx.contractAddress.toLowerCase(), chain: ctx.chainId };
+  const params = {
+    addr: ctx.contractAddress.toLowerCase(),
+    chain: ctx.chainId,
+  };
 
   const systemInstruction = `You are ChainSentry's AI incident agent. You help a developer understand and investigate their smart contract ${
     ctx.contractName ? `"${ctx.contractName}" ` : ""

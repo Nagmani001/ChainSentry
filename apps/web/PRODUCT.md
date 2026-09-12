@@ -14,33 +14,33 @@ Primary users are technical operators of on-chain systems, reaching for ChainSen
 - **DevOps / on-call SRE** — operators watching dashboards and reacting to production anomalies (revert spikes, gas burn, dropped confirmation rates) under time pressure.
 - **Analysts / researchers** — people studying any public contract's activity without owning it: metrics, flows, and behavioral patterns.
 
-Across all three the job is the same shape: understand what a smart contract is *actually doing* on-chain, fast, without having instrumented it ahead of time.
+Across all three the job is the same shape: understand what a smart contract is _actually doing_ on-chain, fast, without having instrumented it ahead of time.
 
 ## Product Purpose
 
-ChainSentry is an observability stack for smart contracts — "Prometheus / Grafana / Loki for smart contracts." It treats a deployed Ethereum contract as the backend layer and reconstructs a full observability picture (Logs / Metrics / Traces) by reading the chain directly, because on-chain event logs, gas, state, and traces already exist as a free, public, append-only record. Success means an operator can point at any contract and immediately see, dashboard, query, and diagnose its behavior — with no code changes to the contract and no prior instrumentation.
+ChainSentry is an observability stack for smart contracts — "Prometheus / Grafana / Loki for smart contracts." It treats a deployed Ethereum contract as the backend layer and reconstructs an observability picture from Graph-indexed on-chain data, because event logs and transaction context already exist as a free, public, append-only record. Success means an operator can point at any contract and immediately see, dashboard, query, and diagnose its behavior — with no code changes to the contract and no prior instrumentation.
 
 ## Positioning
 
-The differentiator is the **zero-config flow**: paste a contract address + chain (devnet / testnet / mainnet) + a natural-language prompt → the backend fetches the ABI, auto-generates an indexer config, deploys it, backfills from the deploy block, and streams decoded on-chain data into ClickHouse — which dashboards and the AI Incident Agent then query. No developer instrumentation is required because the telemetry is derived from the chain itself. A neighboring APM/observability product cannot truthfully claim this: it depends on the contract being the observed backend and the public chain being the append-only data source.
+The differentiator is the **zero-config flow**: paste a contract address + chain (devnet / testnet / mainnet) + a natural-language prompt → the backend fetches the ABI, auto-generates a subgraph, deploys it, queries The Graph, and stores Graph-indexed on-chain data in ClickHouse — which dashboards and the AI Incident Agent then query. No developer instrumentation is required because the telemetry is derived from the chain itself. A neighboring APM/observability product cannot truthfully claim this: it depends on the contract being the observed backend and the public chain being the append-only data source.
 
 ## Operating Context
 
-- Three observability pillars mapped to on-chain primitives: **Logs** = decoded event logs (topics + data); **Metrics** = derived time-series (tx count, success/revert rate, gas, value, unique callers, gas burn, time-to-confirmation, event frequency, user-promoted event params); **Traces** = internal call tree per transaction via `debug_traceTransaction`, correlated on txHash.
+- Three observability pillars mapped to Graph-indexed on-chain primitives: **Logs** = decoded event entities; **Metrics** = derived time-series from indexed event and transaction context; **Traces** = Graph-provided call/correlation data when available, correlated on txHash.
 - An **AI Incident Agent** (conversational): anomaly detection → pull correlated traces + logs + metrics → root-cause analysis.
 - An **MCP server** exposing the same data to external agents/tools.
 - Dashboard usage pattern: left navigation rail (Metrics / Logs / Traces / AI Incident Agent / web2↔web3) plus a prompt-driven "pane builder" that composes a grid of panels.
-- Environments map to public RPC chains: mainnet = chain 1, testnet = Sepolia (11155111), devnet = Holesky (17000).
+- Environments map to Graph networks: mainnet = chain 1, testnet = Sepolia (11155111), devnet = Holesky (17000).
 
 ## Capabilities and Constraints
 
-- Ingestion is **viem RPC (`eth_getLogs`) → decode → ClickHouse**, not The Graph's hosted service — chosen because it is universal and testable, and because the available Graph key is query-only, not a deploy key. A deployable subgraph triplet (subgraph.yaml / schema.graphql / mapping.ts) is still generated and stored, with live Graph deploy gated behind `GRAPH_DEPLOY_KEY` / `GRAPH_NODE_URL`.
+- Ingestion is **generated subgraph → The Graph query API → ClickHouse**. Blockchain-derived frontend data and ClickHouse telemetry must come from Graph-indexed entities, not direct RPC reads.
 - Data stores split by role: **Postgres** (Prisma) holds app / config / job state (Contract, Deployment, IngestionJob); **ClickHouse** holds telemetry (`events`, `transactions` as ReplacingMergeTree, queried with FINAL for dedup, isolated by `chain_id`).
 - ABI resolution via Sourcify v2 zero-config lookup.
 - Frontend stack (existing, not a fresh decision): Next.js 16, React 19, `react-grid-layout` for the dashboard, Recharts for charts, Geist Sans + Geist Mono, in a Turborepo + pnpm monorepo (`apps/web`).
-- Deploy-block detection is best-effort (binary search on `getCode`) and returns null on non-archive public RPCs, falling back to a lookback window.
+- Start block comes from the request when provided, otherwise the generated subgraph starts at block 0 so The Graph is the indexing source of truth.
 - Auto-generated subgraph mappings simplify Solidity tuples to String, so `graph build` may fail on tuple-heavy events.
-- Traces pillar depends on `debug_traceTransaction`, which requires an RPC that supports it (on-demand, per-tx).
+- Traces must be backed by Graph-indexed data before being stored or displayed; RPC trace ingestion is out of product scope.
 
 ## Brand Commitments
 

@@ -8,7 +8,6 @@ import { runPipeline } from "./pipeline.js";
 import { queryEvents, queryMetrics } from "./queries.js";
 import { runReadOnlyQuery } from "./rawQuery.js";
 import { ensureDefaultDashboards } from "./dashboards.js";
-import { ingestTraces } from "./traces.js";
 import { runAgent, runIncidentAgent } from "./agent.js";
 import { env } from "./env.js";
 
@@ -26,6 +25,17 @@ function slugify(name: string): string {
   );
 }
 
+function routeParam(req: Request, name: string): string {
+  const value = req.params[name];
+  if (typeof value !== "string")
+    throw new Error(`missing route param: ${name}`);
+  return value;
+}
+
+function queryString(value: unknown): string | undefined {
+  return typeof value === "string" ? value : undefined;
+}
+
 const createContractSchema = z.object({
   address: z.string().regex(/^0x[a-fA-F0-9]{40}$/, "invalid EVM address"),
   environment: z.enum(["devnet", "testnet", "mainnet"]),
@@ -33,7 +43,6 @@ const createContractSchema = z.object({
   abi: z.unknown().optional(),
   fromBlock: z.number().int().optional(),
   toBlock: z.number().int().optional(),
-  maxBlocks: z.number().int().positive().optional(),
   sync: z.boolean().optional(),
 });
 
@@ -50,7 +59,10 @@ app.post("/contracts", async (req: Request, res: Response) => {
     const result = await runPipeline(parsed.data);
     return res.status(201).json({
       contract: result.contract,
-      deployment: { id: result.deployment.id, eventNames: result.deployment.eventNames },
+      deployment: {
+        id: result.deployment.id,
+        eventNames: result.deployment.eventNames,
+      },
       job: result.job,
       abiSource: result.abiSource,
       contractName: result.contractName,
@@ -58,7 +70,9 @@ app.post("/contracts", async (req: Request, res: Response) => {
       deploy: result.deploy,
       indexRange: { fromBlock: result.fromBlock, toBlock: result.toBlock },
       plan: {
-        selectedEvents: result.plan.selectedEvents.map((e) => e.name),
+        selectedEvents: result.plan.selectedEvents.map(
+          (e: { name: string }) => e.name,
+        ),
         includeTransactions: result.plan.includeTransactions,
         notes: result.plan.notes,
       },
@@ -79,8 +93,9 @@ app.get("/contracts", async (_req: Request, res: Response) => {
 });
 
 app.get("/contracts/:id", async (req: Request, res: Response) => {
+  const id = routeParam(req, "id");
   const contract = await prisma.contract.findUnique({
-    where: { id: req.params.id },
+    where: { id },
     include: {
       deployments: { orderBy: { createdAt: "desc" }, take: 1 },
       jobs: { orderBy: { createdAt: "desc" }, take: 1 },
@@ -91,8 +106,9 @@ app.get("/contracts/:id", async (req: Request, res: Response) => {
 });
 
 app.get("/contracts/:id/config", async (req: Request, res: Response) => {
+  const id = routeParam(req, "id");
   const deployment = await prisma.deployment.findFirst({
-    where: { contractId: req.params.id },
+    where: { contractId: id },
     orderBy: { createdAt: "desc" },
   });
   if (!deployment) return res.status(404).json({ error: "no config found" });
@@ -113,43 +129,53 @@ app.get("/contracts/:id/config", async (req: Request, res: Response) => {
 });
 
 app.get("/contracts/:id/events", async (req: Request, res: Response) => {
-  const contract = await prisma.contract.findUnique({ where: { id: req.params.id } });
+  const id = routeParam(req, "id");
+  const contract = await prisma.contract.findUnique({
+    where: { id },
+  });
   if (!contract) return res.status(404).json({ error: "contract not found" });
+  const eventName = queryString(req.query.event);
+  const fromBlock = queryString(req.query.fromBlock);
+  const toBlock = queryString(req.query.toBlock);
+  const limit = queryString(req.query.limit);
   const rows = await queryEvents({
     contractAddress: contract.address,
     chainId: contract.chainId,
-    eventName: req.query.event as string | undefined,
-    fromBlock: req.query.fromBlock ? Number(req.query.fromBlock) : undefined,
-    toBlock: req.query.toBlock ? Number(req.query.toBlock) : undefined,
-    limit: req.query.limit ? Number(req.query.limit) : undefined,
+    eventName,
+    fromBlock: fromBlock ? Number(fromBlock) : undefined,
+    toBlock: toBlock ? Number(toBlock) : undefined,
+    limit: limit ? Number(limit) : undefined,
   });
   res.json({ count: (rows as unknown[]).length, events: rows });
 });
 
 app.get("/contracts/:id/metrics", async (req: Request, res: Response) => {
-  const contract = await prisma.contract.findUnique({ where: { id: req.params.id } });
+  const id = routeParam(req, "id");
+  const contract = await prisma.contract.findUnique({
+    where: { id },
+  });
   if (!contract) return res.status(404).json({ error: "contract not found" });
   const metrics = await queryMetrics(contract.address, contract.chainId);
   res.json(metrics);
 });
 
 app.post("/contracts/:id/traces", async (req: Request, res: Response) => {
-  const contract = await prisma.contract.findUnique({ where: { id: req.params.id } });
+  const id = routeParam(req, "id");
+  const contract = await prisma.contract.findUnique({
+    where: { id },
+  });
   if (!contract) return res.status(404).json({ error: "contract not found" });
-  try {
-    const result = await ingestTraces({
-      environment: contract.environment,
-      contractAddress: contract.address,
-      limit: req.query.limit ? Number(req.query.limit) : undefined,
-    });
-    res.json(result);
-  } catch (err) {
-    res.status(500).json({ error: (err as Error).message });
-  }
+  res.status(501).json({
+    error:
+      "Trace ingestion is disabled until traces are available from a Graph-indexed source.",
+  });
 });
 
 app.get("/jobs/:id", async (req: Request, res: Response) => {
-  const job = await prisma.ingestionJob.findUnique({ where: { id: req.params.id } });
+  const id = routeParam(req, "id");
+  const job = await prisma.ingestionJob.findUnique({
+    where: { id },
+  });
   if (!job) return res.status(404).json({ error: "job not found" });
   res.json(job);
 });
@@ -173,7 +199,7 @@ app.post("/query", async (req: Request, res: Response) => {
 });
 
 app.get("/dashboards", async (req: Request, res: Response) => {
-  const section = req.query.section as string | undefined;
+  const section = queryString(req.query.section);
   const dashboards = await prisma.dashboard.findMany({
     where: section ? { section } : undefined,
     orderBy: [{ isDefault: "desc" }, { updatedAt: "desc" }],
@@ -208,21 +234,23 @@ app.post("/dashboards", async (req: Request, res: Response) => {
 });
 
 app.get("/dashboards/:id", async (req: Request, res: Response) => {
+  const id = routeParam(req, "id");
   const dashboard = await prisma.dashboard.findUnique({
-    where: { id: req.params.id },
+    where: { id },
   });
   if (!dashboard) return res.status(404).json({ error: "dashboard not found" });
   res.json(dashboard);
 });
 
 app.put("/dashboards/:id", async (req: Request, res: Response) => {
+  const id = routeParam(req, "id");
   const parsed = upsertDashboardSchema.partial().safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({ error: parsed.error.flatten() });
   }
   try {
     const dashboard = await prisma.dashboard.update({
-      where: { id: req.params.id },
+      where: { id },
       data: {
         ...(parsed.data.name ? { name: parsed.data.name } : {}),
         ...(parsed.data.spec !== undefined
@@ -237,8 +265,9 @@ app.put("/dashboards/:id", async (req: Request, res: Response) => {
 });
 
 app.delete("/dashboards/:id", async (req: Request, res: Response) => {
+  const id = routeParam(req, "id");
   try {
-    await prisma.dashboard.delete({ where: { id: req.params.id } });
+    await prisma.dashboard.delete({ where: { id } });
     res.status(204).end();
   } catch {
     res.status(404).json({ error: "dashboard not found" });

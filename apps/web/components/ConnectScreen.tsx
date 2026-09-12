@@ -83,7 +83,6 @@ export function ConnectScreen() {
         address: address.trim(),
         environment,
         prompt: prompt.trim(),
-        maxBlocks: 5000,
       });
       router.push(`/metrics?c=${res.contract.id}`);
     } catch (e) {
@@ -99,8 +98,8 @@ export function ConnectScreen() {
           <h1 className="connect-title">Connect a contract</h1>
           <p className="connect-sub">
             Point ChainSentry at any deployed contract. It fetches the ABI,
-            builds an indexer, backfills the chain and streams decoded logs,
-            metrics and traces — no instrumentation required.
+            builds a subgraph and stores Graph-indexed logs and metrics — no
+            instrumentation required.
           </p>
         </div>
 
@@ -153,7 +152,8 @@ export function ConnectScreen() {
             onKeyDown={(e) => e.key === "Enter" && connect()}
           />
           <div className="form-help">
-            The prompt selects which events to index and which metrics to derive.
+            The prompt selects which events to index and which metrics to
+            derive.
           </div>
         </div>
 
@@ -245,11 +245,7 @@ export function ConnectScreen() {
         ) : (
           <div className="aside-list">
             {recent.map((c) => (
-              <Link
-                key={c.id}
-                href={`/metrics?c=${c.id}`}
-                className="ds-row"
-              >
+              <Link key={c.id} href={`/metrics?c=${c.id}`} className="ds-row">
                 <span className="ds-mark">
                   <Icon name="chart" size={16} />
                 </span>

@@ -1,12 +1,5 @@
 export type VizType =
-  | "line"
-  | "bar"
-  | "area"
-  | "stat"
-  | "table"
-  | "pie"
-  | "logs"
-  | "trace";
+  "line" | "bar" | "area" | "stat" | "table" | "pie" | "logs" | "trace";
 
 export type DashboardSection = "metrics" | "logs" | "traces";
 
@@ -48,7 +41,6 @@ export interface CreateContractInput {
   address: string;
   environment: Environment;
   prompt: string;
-  maxBlocks?: number;
 }
 
 export interface CreateContractResult {
