@@ -11,6 +11,7 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
+    "@google-cloud/storage": "^8.1.0",
     "@google/genai": "^2.21.0",
     "@privy-io/server-auth": "^1.32.5",
     "@repo/database": "workspace:*",

@@ -2,11 +2,21 @@ import { execFile } from "node:child_process";
 import { access, mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { promisify } from "node:util";
+import { Storage } from "@google-cloud/storage";
 import type { Abi } from "viem";
 import { env } from "./env.js";
 import type { GeneratedConfig } from "./configgen.js";
 
 const run = promisify(execFile);
+const storage = new Storage(
+  env.gcsProjectId ? { projectId: env.gcsProjectId } : undefined,
+);
+
+interface ArtifactUpload {
+  bucket: string | null;
+  prefix: string | null;
+  manifestUrl: string | null;
+}
 
 export interface DeployResult {
   projectPath: string;
@@ -14,6 +24,9 @@ export interface DeployResult {
   target: string;
   message: string;
   queryUrl: string | null;
+  artifactBucket: string | null;
+  artifactPrefix: string | null;
+  artifactManifestUrl: string | null;
 }
 
 export interface DeployInput {
@@ -66,6 +79,77 @@ async function writeProject(input: DeployInput): Promise<string> {
   return projectPath;
 }
 
+function publicUrl(bucket: string, key: string): string {
+  if (env.gcsPublicBaseUrl) {
+    return `${env.gcsPublicBaseUrl.replace(/\/$/, "")}/${key}`;
+  }
+  return `gs://${bucket}/${key}`;
+}
+
+async function uploadArtifacts(input: DeployInput): Promise<ArtifactUpload> {
+  if (!env.gcsSubgraphBucket) {
+    return { bucket: null, prefix: null, manifestUrl: null };
+  }
+  const bucket = storage.bucket(env.gcsSubgraphBucket);
+  const prefix = `subgraphs/${input.deploymentId}`;
+  const files = [
+    {
+      name: "subgraph.yaml",
+      content: input.config.subgraphYaml,
+      contentType: "application/x-yaml",
+    },
+    {
+      name: "schema.graphql",
+      content: input.config.schemaGraphql,
+      contentType: "application/graphql",
+    },
+    {
+      name: "src/mapping.ts",
+      content: input.config.mappingsTs,
+      contentType: "application/typescript",
+    },
+    {
+      name: `abis/${input.contractName}.json`,
+      content: JSON.stringify(input.abi, null, 2),
+      contentType: "application/json",
+    },
+    {
+      name: "package.json",
+      content: packageJson(input.contractName),
+      contentType: "application/json",
+    },
+  ];
+  const manifest = {
+    deploymentId: input.deploymentId,
+    contractName: input.contractName,
+    network: input.network,
+    generatedAt: new Date().toISOString(),
+    files: files.map((file) => ({
+      name: file.name,
+      url: publicUrl(env.gcsSubgraphBucket, `${prefix}/${file.name}`),
+    })),
+  };
+  await Promise.all([
+    ...files.map((file) =>
+      bucket.file(`${prefix}/${file.name}`).save(file.content, {
+        contentType: file.contentType,
+        resumable: false,
+      }),
+    ),
+    bucket
+      .file(`${prefix}/manifest.json`)
+      .save(JSON.stringify(manifest, null, 2), {
+        contentType: "application/json",
+        resumable: false,
+      }),
+  ]);
+  return {
+    bucket: env.gcsSubgraphBucket,
+    prefix,
+    manifestUrl: publicUrl(env.gcsSubgraphBucket, `${prefix}/manifest.json`),
+  };
+}
+
 async function graph(projectPath: string, args: string[]): Promise<string> {
   const { stdout, stderr } = await run(
     "npx",
@@ -91,6 +175,7 @@ export async function deploySubgraph(
   input: DeployInput,
 ): Promise<DeployResult> {
   const projectPath = await writeProject(input);
+  const artifact = await uploadArtifacts(input);
   const slug =
     env.graphSubgraphSlug ||
     `${input.contractName.toLowerCase()}-${input.network}`;
@@ -123,6 +208,9 @@ export async function deploySubgraph(
         target: `graph-node:${env.graphNodeUrl}`,
         message: out.slice(-2000),
         queryUrl: `${env.graphNodeUrl.replace(/\/$/, "")}/subgraphs/name/${slug}`,
+        artifactBucket: artifact.bucket,
+        artifactPrefix: artifact.prefix,
+        artifactManifestUrl: artifact.manifestUrl,
       };
     } catch (err) {
       return {
@@ -131,6 +219,9 @@ export async function deploySubgraph(
         target: `graph-node:${env.graphNodeUrl}`,
         message: (err as Error).message.slice(-2000),
         queryUrl: null,
+        artifactBucket: artifact.bucket,
+        artifactPrefix: artifact.prefix,
+        artifactManifestUrl: artifact.manifestUrl,
       };
     }
   }
@@ -157,6 +248,9 @@ export async function deploySubgraph(
         target: "subgraph-studio",
         message: out.slice(-2000),
         queryUrl,
+        artifactBucket: artifact.bucket,
+        artifactPrefix: artifact.prefix,
+        artifactManifestUrl: artifact.manifestUrl,
       };
     } catch (err) {
       return {
@@ -165,6 +259,9 @@ export async function deploySubgraph(
         target: "subgraph-studio",
         message: (err as Error).message.slice(-2000),
         queryUrl: null,
+        artifactBucket: artifact.bucket,
+        artifactPrefix: artifact.prefix,
+        artifactManifestUrl: artifact.manifestUrl,
       };
     }
   }
@@ -176,5 +273,8 @@ export async function deploySubgraph(
     message:
       "Deployable subgraph project written to disk. Set GRAPH_NODE_URL (+IPFS_URL) or GRAPH_DEPLOY_KEY to deploy it, then ChainSentry will ingest blockchain data from the subgraph query endpoint into ClickHouse.",
     queryUrl: null,
+    artifactBucket: artifact.bucket,
+    artifactPrefix: artifact.prefix,
+    artifactManifestUrl: artifact.manifestUrl,
   };
 }

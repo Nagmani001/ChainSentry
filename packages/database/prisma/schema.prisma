@@ -137,21 +137,24 @@ model AlertIssue {
 }
 
 model Deployment {
-  id            String        @id @default(cuid())
-  contractId    String
-  contract      Contract      @relation(fields: [contractId], references: [id], onDelete: Cascade)
-  prompt        String
-  subgraphYaml  String
-  schemaGraphql String
-  mappingsTs    String
-  eventNames    String[]
-  projectPath   String?
-  deployStatus  String?
-  deployTarget  String?
-  deployMessage String?
-  queryUrl      String?
-  createdAt     DateTime      @default(now())
-  job           IngestionJob?
+  id                  String        @id @default(cuid())
+  contractId          String
+  contract            Contract      @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  prompt              String
+  subgraphYaml        String
+  schemaGraphql       String
+  mappingsTs          String
+  eventNames          String[]
+  projectPath         String?
+  deployStatus        String?
+  deployTarget        String?
+  deployMessage       String?
+  queryUrl            String?
+  artifactBucket      String?
+  artifactPrefix      String?
+  artifactManifestUrl String?
+  createdAt           DateTime      @default(now())
+  job                 IngestionJob?
 }
 
 model Dashboard {

@@ -105,6 +105,9 @@ export async function runPipeline(input: PipelineInput): Promise<any> {
       deployTarget: deployResult.target,
       deployMessage: deployResult.message,
       queryUrl: deployResult.queryUrl,
+      artifactBucket: deployResult.artifactBucket,
+      artifactPrefix: deployResult.artifactPrefix,
+      artifactManifestUrl: deployResult.artifactManifestUrl,
     },
   });
 

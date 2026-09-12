@@ -266,6 +266,11 @@ app.get("/contracts/:id/config", async (req: Request, res: Response) => {
       queryUrl: deployment.queryUrl,
       message: deployment.deployMessage,
     },
+    artifact: {
+      bucket: deployment.artifactBucket,
+      prefix: deployment.artifactPrefix,
+      manifestUrl: deployment.artifactManifestUrl,
+    },
     "subgraph.yaml": deployment.subgraphYaml,
     "schema.graphql": deployment.schemaGraphql,
     "mapping.ts": deployment.mappingsTs,
