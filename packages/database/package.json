@@ -22,7 +22,7 @@
   },
   "scripts": {
     "db:generate": "prisma generate",
-    "build": "prisma generate && tsc -p tsconfig.json && cp -r src/generated dist/generated",
+    "build": "prisma generate && tsc -p tsconfig.json && rm -rf dist/generated && cp -r src/generated dist/generated",
     "check-types": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

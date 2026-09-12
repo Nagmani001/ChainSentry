@@ -109,51 +109,66 @@ export async function runPipeline(input: PipelineInput): Promise<any> {
   });
 
   const runIngestion = async () => {
-    try {
-      await prisma.ingestionJob.update({
-        where: { id: job.id },
-        data: { status: "indexing" },
-      });
-      if (!updatedDeployment.queryUrl) {
-        throw new Error(
-          "Subgraph was not deployed with a query URL. Configure GRAPH_NODE_URL or GRAPH_DEPLOY_KEY plus GRAPH_STUDIO_ID before indexing.",
-        );
-      }
-      const result = await ingestContract({
-        chain,
-        address: lowerAddress,
-        queryUrl: updatedDeployment.queryUrl,
-        includeTransactions: plan.includeTransactions,
-        fromBlock,
-        toBlock,
-        onProgress: async ({ lastBlock, eventsIngested, txIngested }) => {
+    const MAX_RETRIES = 60;
+    const RETRY_DELAY_MS = 30_000;
+    for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+      try {
+        await prisma.ingestionJob.update({
+          where: { id: job.id },
+          data: { status: "indexing" },
+        });
+        if (!updatedDeployment.queryUrl) {
+          throw new Error(
+            "Subgraph was not deployed with a query URL. Configure GRAPH_NODE_URL or GRAPH_DEPLOY_KEY plus GRAPH_STUDIO_ID before indexing.",
+          );
+        }
+        const result = await ingestContract({
+          chain,
+          address: lowerAddress,
+          queryUrl: updatedDeployment.queryUrl,
+          includeTransactions: plan.includeTransactions,
+          fromBlock,
+          toBlock,
+          onProgress: async ({ lastBlock, eventsIngested, txIngested }) => {
+            await prisma.ingestionJob.update({
+              where: { id: job.id },
+              data: {
+                lastIndexedBlock: lastBlock,
+                eventsIngested,
+                txIngested,
+              },
+            });
+          },
+        });
+        await prisma.ingestionJob.update({
+          where: { id: job.id },
+          data: {
+            status: "live",
+            lastIndexedBlock: result.lastBlock,
+            eventsIngested: result.eventsIngested,
+            txIngested: result.txIngested,
+          },
+        });
+        return result;
+      } catch (err) {
+        const message = (err as Error).message;
+        const retriable = attempt < MAX_RETRIES - 1;
+        if (retriable) {
           await prisma.ingestionJob.update({
             where: { id: job.id },
-            data: {
-              lastIndexedBlock: lastBlock,
-              eventsIngested,
-              txIngested,
-            },
+            data: { lastIndexedBlock: null, error: null },
           });
-        },
-      });
-      await prisma.ingestionJob.update({
-        where: { id: job.id },
-        data: {
-          status: "live",
-          lastIndexedBlock: result.lastBlock,
-          eventsIngested: result.eventsIngested,
-          txIngested: result.txIngested,
-        },
-      });
-      return result;
-    } catch (err) {
-      await prisma.ingestionJob.update({
-        where: { id: job.id },
-        data: { status: "failed", error: (err as Error).message },
-      });
-      throw err;
+          await new Promise((r) => setTimeout(r, RETRY_DELAY_MS));
+          continue;
+        }
+        await prisma.ingestionJob.update({
+          where: { id: job.id },
+          data: { status: "failed", error: message },
+        });
+        throw err;
+      }
     }
+    throw new Error("Ingestion exhausted retries.");
   };
 
   let ingestResult = null;

@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { mkdir, writeFile } from "node:fs/promises";
+import { access, mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { promisify } from "node:util";
 import type { Abi } from "viem";
@@ -75,15 +75,31 @@ async function graph(projectPath: string, args: string[]): Promise<string> {
   return `${stdout}\n${stderr}`.trim();
 }
 
+async function installDeps(projectPath: string): Promise<void> {
+  try {
+    await access(join(projectPath, "node_modules"));
+    return;
+  } catch {
+    /* node_modules missing, install below */
+  }
+  await run(
+    "npm",
+    ["install", "--no-audit", "--no-fund", "--ignore-scripts"],
+    { cwd: projectPath, timeout: 300000, maxBuffer: 10 * 1024 * 1024 },
+  );
+}
+
 export async function deploySubgraph(
   input: DeployInput,
 ): Promise<DeployResult> {
   const projectPath = await writeProject(input);
-  const slug = `${input.contractName.toLowerCase()}-${input.network}`;
+  const slug =
+    env.graphSubgraphSlug || `${input.contractName.toLowerCase()}-${input.network}`;
 
   if (env.graphNodeUrl) {
     const ipfs = env.ipfsUrl || "http://localhost:5001";
     try {
+      await installDeps(projectPath);
       await graph(projectPath, ["codegen"]);
       await graph(projectPath, ["build"]);
       await graph(projectPath, [
@@ -122,19 +138,19 @@ export async function deploySubgraph(
 
   if (env.graphDeployKey) {
     try {
+      await installDeps(projectPath);
       await graph(projectPath, ["codegen"]);
       await graph(projectPath, ["build"]);
       const out = await graph(projectPath, [
         "deploy",
         slug,
-        "--studio",
         "--deploy-key",
         env.graphDeployKey,
         "--version-label",
-        env.graphVersionLabel,
+        `${env.graphVersionLabel}-${Math.floor(Date.now() / 1000)}`,
       ]);
       const queryUrl = env.graphStudioId
-        ? `https://api.studio.thegraph.com/query/${env.graphStudioId}/${slug}/${env.graphVersionLabel}`
+        ? `https://api.studio.thegraph.com/query/${env.graphStudioId}/${slug}/version/latest`
         : null;
       return {
         projectPath,

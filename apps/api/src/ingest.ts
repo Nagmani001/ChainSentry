@@ -63,7 +63,7 @@ async function fetchGraphEvents(input: {
   fromBlock: bigint;
   toBlock: bigint | null;
   skip: number;
-}): Promise<GraphEvent[]> {
+}): Promise<{ events: GraphEvent[]; indexedBlock: string | null }> {
   const toFilter = input.toBlock != null ? ", blockNumber_lte: $toBlock" : "";
   const query = `query ChainSentryEvents($first: Int!, $skip: Int!, $address: Bytes!, $fromBlock: BigInt!${input.toBlock != null ? ", $toBlock: BigInt!" : ""}) {
   chainSentryEvents(first: $first, skip: $skip, orderBy: blockNumber, orderDirection: asc, where: { contractAddress: $address, blockNumber_gte: $fromBlock ${toFilter} }) {
@@ -85,6 +85,9 @@ async function fetchGraphEvents(input: {
     gasLimit
     input
   }
+  _meta {
+    block { number }
+  }
 }`;
   const variables: Record<string, unknown> = {
     first: GRAPH_BATCH,
@@ -93,12 +96,15 @@ async function fetchGraphEvents(input: {
     fromBlock: input.fromBlock.toString(),
   };
   if (input.toBlock != null) variables.toBlock = input.toBlock.toString();
-  const data = await graphQuery<{ chainSentryEvents: GraphEvent[] }>(
-    input.queryUrl,
-    query,
-    variables,
-  );
-  return data.chainSentryEvents;
+  const data = await graphQuery<{
+    chainSentryEvents: GraphEvent[];
+    _meta?: { block: { number: string | number } | null } | null;
+  }>(input.queryUrl, query, variables);
+  return {
+    events: data.chainSentryEvents,
+    indexedBlock:
+      data._meta?.block?.number != null ? String(data._meta.block.number) : null,
+  };
 }
 
 export interface IngestOptions {
@@ -168,14 +174,21 @@ export async function ingestContract(
   const seenTx = new Set<string>();
 
   while (true) {
-    const rows = await fetchGraphEvents({
+    const { events: rows, indexedBlock } = await fetchGraphEvents({
       queryUrl: opts.queryUrl,
       address: opts.address,
       fromBlock: opts.fromBlock,
       toBlock: opts.toBlock,
       skip,
     });
-    if (rows.length === 0) break;
+    if (rows.length === 0) {
+      if (indexedBlock != null && BigInt(indexedBlock) < opts.fromBlock) {
+        throw new Error(
+          `Subgraph still syncing (indexed to block ${indexedBlock}, need ${opts.fromBlock}); waiting for it to catch up.`,
+        );
+      }
+      break;
+    }
 
     const eventRows = rows.map((row) => eventRow(opts.chain, row));
     for (let i = 0; i < eventRows.length; i += INSERT_BATCH) {

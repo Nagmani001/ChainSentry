@@ -16,6 +16,8 @@ export const env = {
   graphDeployKey: process.env.GRAPH_DEPLOY_KEY ?? "",
   graphNodeUrl: process.env.GRAPH_NODE_URL ?? "",
   graphStudioId: process.env.GRAPH_STUDIO_ID ?? "",
+  // optional exact Studio subgraph slug; defaults to {contractName}-{network}
+  graphSubgraphSlug: process.env.GRAPH_SUBGRAPH_SLUG ?? "",
   graphVersionLabel: process.env.GRAPH_VERSION_LABEL ?? "v0.0.1",
   ipfsUrl: process.env.IPFS_URL ?? "",
   generatedDir: resolve(here, "../../../generated/subgraphs"),

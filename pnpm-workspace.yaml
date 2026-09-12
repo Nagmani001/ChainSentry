@@ -2,10 +2,10 @@ packages:
   - "apps/*"
   - "packages/*"
 
-onlyBuiltDependencies:
-  - esbuild
-  - prisma
-  - "@prisma/engines"
-  - msgpackr-extract
-  - "@google/genai"
-  - protobufjs
+allowBuilds:
+  esbuild: true
+  prisma: true
+  "@prisma/engines": true
+  msgpackr-extract: true
+  "@google/genai": true
+  protobufjs: true
