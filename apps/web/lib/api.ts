@@ -19,10 +19,23 @@ import type {
 
 const BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
+let authTokenGetter: (() => Promise<string | null>) | null = null;
+
+export function setAuthTokenGetter(
+  getter: (() => Promise<string | null>) | null,
+) {
+  authTokenGetter = getter;
+}
+
 async function req<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = authTokenGetter ? await authTokenGetter() : null;
   const res = await fetch(`${BASE}${path}`, {
     ...init,
-    headers: { "Content-Type": "application/json", ...(init?.headers ?? {}) },
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(init?.headers ?? {}),
+    },
   });
   const text = await res.text();
   const body = text ? JSON.parse(text) : null;
@@ -89,24 +102,20 @@ export const api = {
       method: "POST",
       body: JSON.stringify(input),
     }),
-  alertingContext: (privyId: string) =>
-    req<AlertingContext>(
-      `/alerting/context?privyId=${encodeURIComponent(privyId)}`,
-    ),
-  createOrg: (privyId: string, name: string) =>
+  alertingContext: (_privyId: string) =>
+    req<AlertingContext>("/alerting/context"),
+  createOrg: (_privyId: string, name: string) =>
     req<Organization>("/orgs", {
       method: "POST",
-      body: JSON.stringify({ privyId, name }),
+      body: JSON.stringify({ name }),
     }),
-  joinOrg: (privyId: string, orgId: string) =>
+  joinOrg: (_privyId: string, orgId: string) =>
     req("/orgs/join", {
       method: "POST",
-      body: JSON.stringify({ privyId, orgId }),
+      body: JSON.stringify({ orgId }),
     }),
-  orgAlerting: (orgId: string, privyId: string) =>
-    req<OrgAlertingData>(
-      `/orgs/${orgId}/alerting?privyId=${encodeURIComponent(privyId)}`,
-    ),
+  orgAlerting: (orgId: string, _privyId: string) =>
+    req<OrgAlertingData>(`/orgs/${orgId}/alerting`),
   createOnCallSlot: (
     orgId: string,
     input: {
@@ -118,7 +127,7 @@ export const api = {
   ) =>
     req<OnCallSlot>(`/orgs/${orgId}/on-call`, {
       method: "POST",
-      body: JSON.stringify(input),
+      body: JSON.stringify({ ...input, privyId: undefined }),
     }),
   createAlertRule: (
     orgId: string,
@@ -135,17 +144,17 @@ export const api = {
   ) =>
     req<AlertRule>(`/orgs/${orgId}/alerts`, {
       method: "POST",
-      body: JSON.stringify(input),
+      body: JSON.stringify({ ...input, privyId: undefined }),
     }),
-  evaluateAlert: (id: string, privyId: string) =>
+  evaluateAlert: (id: string, _privyId: string) =>
     req<{ triggered: boolean; value: number; notification?: string }>(
       `/alerts/${id}/evaluate`,
-      { method: "POST", body: JSON.stringify({ privyId }) },
+      { method: "POST", body: JSON.stringify({}) },
     ),
-  resolveIssue: (id: string, privyId: string) =>
+  resolveIssue: (id: string, _privyId: string) =>
     req<AlertIssue>(`/issues/${id}/resolve`, {
       method: "POST",
-      body: JSON.stringify({ privyId }),
+      body: JSON.stringify({}),
     }),
   verifyIssue: (
     id: string,
@@ -153,6 +162,6 @@ export const api = {
   ) =>
     req<AlertIssue>(`/issues/${id}/verify`, {
       method: "POST",
-      body: JSON.stringify(input),
+      body: JSON.stringify({ ...input, privyId: undefined }),
     }),
 };

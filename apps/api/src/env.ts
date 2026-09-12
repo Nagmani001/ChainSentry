@@ -24,6 +24,7 @@ export const env = {
   twilioAuthToken: process.env.TWILIO_AUTH_TOKEN ?? "",
   twilioFromPhone: process.env.TWILIO_FROM_PHONE ?? "",
   privyAppId: process.env.PRIVY_APP_ID ?? "",
+  privyAppSecret: process.env.PRIVY_APP_SECRET ?? "",
   ipfsUrl: process.env.IPFS_URL ?? "",
   generatedDir: resolve(here, "../../../generated/subgraphs"),
   geminiApiKey: process.env.GEMINI_API_KEY ?? "",

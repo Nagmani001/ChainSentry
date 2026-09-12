@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Icon, type IconName } from "./Icon";
 import { CommandPalette } from "./CommandPalette";
+import { AuthButton, AuthGate } from "./AuthGate";
 
 interface NavLeaf {
   label: string;
@@ -195,7 +196,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <span className="nav-avatar">
               <Icon name="user" size={16} />
             </span>
-            <span className="nav-item-label">Operator</span>
+            <span className="nav-item-label">Privy user</span>
           </div>
         </div>
       </aside>
@@ -236,13 +237,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             >
               <Icon name="help" size={18} />
             </button>
-            <span className="topbar-avatar" title="Operator">
-              <Icon name="user" size={16} />
-            </span>
+            <AuthButton />
           </div>
         </header>
 
-        <div className="page">{children}</div>
+        <div className="page">
+          <AuthGate>{children}</AuthGate>
+        </div>
       </div>
 
       <CommandPalette

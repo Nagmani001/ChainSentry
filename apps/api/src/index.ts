@@ -28,6 +28,7 @@ import {
   userSchema,
   verifyIssue,
 } from "./alerting.js";
+import { requirePrivyUser } from "./auth.js";
 
 const app: Express = express();
 app.use(cors({ origin: env.corsOrigin }));
@@ -69,34 +70,35 @@ app.get("/health", (_req: Request, res: Response) => {
 });
 
 app.post("/auth/sync", async (req: Request, res: Response) => {
-  const parsed = userSchema.safeParse(req.body);
-  if (!parsed.success) {
-    return res.status(400).json({ error: parsed.error.flatten() });
-  }
   try {
+    const privyId = await requirePrivyUser(req);
+    const parsed = userSchema.safeParse({ ...req.body, privyId });
+    if (!parsed.success) {
+      return res.status(400).json({ error: parsed.error.flatten() });
+    }
     const user = await syncUser(parsed.data);
     return res.status(201).json(user);
   } catch (err) {
-    return res.status(500).json({ error: (err as Error).message });
+    return res.status(401).json({ error: (err as Error).message });
   }
 });
 
 app.get("/alerting/context", async (req: Request, res: Response) => {
-  const privyId = queryString(req.query.privyId);
-  if (!privyId) return res.status(400).json({ error: "privyId is required" });
   try {
+    const privyId = await requirePrivyUser(req);
     return res.json(await getAlertingContext(privyId));
   } catch (err) {
-    return res.status(500).json({ error: (err as Error).message });
+    return res.status(401).json({ error: (err as Error).message });
   }
 });
 
 app.post("/orgs", async (req: Request, res: Response) => {
-  const parsed = createOrgSchema.safeParse(req.body);
-  if (!parsed.success) {
-    return res.status(400).json({ error: parsed.error.flatten() });
-  }
   try {
+    const privyId = await requirePrivyUser(req);
+    const parsed = createOrgSchema.safeParse({ ...req.body, privyId });
+    if (!parsed.success) {
+      return res.status(400).json({ error: parsed.error.flatten() });
+    }
     return res.status(201).json(await createOrg(parsed.data));
   } catch (err) {
     return res.status(400).json({ error: (err as Error).message });
@@ -104,11 +106,12 @@ app.post("/orgs", async (req: Request, res: Response) => {
 });
 
 app.post("/orgs/join", async (req: Request, res: Response) => {
-  const parsed = joinOrgSchema.safeParse(req.body);
-  if (!parsed.success) {
-    return res.status(400).json({ error: parsed.error.flatten() });
-  }
   try {
+    const privyId = await requirePrivyUser(req);
+    const parsed = joinOrgSchema.safeParse({ ...req.body, privyId });
+    if (!parsed.success) {
+      return res.status(400).json({ error: parsed.error.flatten() });
+    }
     return res.status(201).json(await joinOrg(parsed.data));
   } catch (err) {
     return res.status(400).json({ error: (err as Error).message });
@@ -117,9 +120,8 @@ app.post("/orgs/join", async (req: Request, res: Response) => {
 
 app.get("/orgs/:id/alerting", async (req: Request, res: Response) => {
   const orgId = routeParam(req, "id");
-  const privyId = queryString(req.query.privyId);
-  if (!privyId) return res.status(400).json({ error: "privyId is required" });
   try {
+    const privyId = await requirePrivyUser(req);
     return res.json(await listOrgData(orgId, privyId));
   } catch (err) {
     return res.status(400).json({ error: (err as Error).message });
@@ -128,11 +130,12 @@ app.get("/orgs/:id/alerting", async (req: Request, res: Response) => {
 
 app.post("/orgs/:id/on-call", async (req: Request, res: Response) => {
   const orgId = routeParam(req, "id");
-  const parsed = createSlotSchema.safeParse(req.body);
-  if (!parsed.success) {
-    return res.status(400).json({ error: parsed.error.flatten() });
-  }
   try {
+    const privyId = await requirePrivyUser(req);
+    const parsed = createSlotSchema.safeParse({ ...req.body, privyId });
+    if (!parsed.success) {
+      return res.status(400).json({ error: parsed.error.flatten() });
+    }
     return res.status(201).json(await createOnCallSlot(orgId, parsed.data));
   } catch (err) {
     return res.status(400).json({ error: (err as Error).message });
@@ -141,11 +144,12 @@ app.post("/orgs/:id/on-call", async (req: Request, res: Response) => {
 
 app.post("/orgs/:id/alerts", async (req: Request, res: Response) => {
   const orgId = routeParam(req, "id");
-  const parsed = createRuleSchema.safeParse(req.body);
-  if (!parsed.success) {
-    return res.status(400).json({ error: parsed.error.flatten() });
-  }
   try {
+    const privyId = await requirePrivyUser(req);
+    const parsed = createRuleSchema.safeParse({ ...req.body, privyId });
+    if (!parsed.success) {
+      return res.status(400).json({ error: parsed.error.flatten() });
+    }
     return res.status(201).json(await createAlertRule(orgId, parsed.data));
   } catch (err) {
     return res.status(400).json({ error: (err as Error).message });
@@ -154,9 +158,8 @@ app.post("/orgs/:id/alerts", async (req: Request, res: Response) => {
 
 app.post("/alerts/:id/evaluate", async (req: Request, res: Response) => {
   const id = routeParam(req, "id");
-  const privyId = typeof req.body?.privyId === "string" ? req.body.privyId : "";
-  if (!privyId) return res.status(400).json({ error: "privyId is required" });
   try {
+    const privyId = await requirePrivyUser(req);
     return res.json(await evaluateAlertRule(id, privyId));
   } catch (err) {
     return res.status(400).json({ error: (err as Error).message });
@@ -165,11 +168,12 @@ app.post("/alerts/:id/evaluate", async (req: Request, res: Response) => {
 
 app.post("/issues/:id/resolve", async (req: Request, res: Response) => {
   const id = routeParam(req, "id");
-  const parsed = issueActionSchema.safeParse(req.body);
-  if (!parsed.success) {
-    return res.status(400).json({ error: parsed.error.flatten() });
-  }
   try {
+    const privyId = await requirePrivyUser(req);
+    const parsed = issueActionSchema.safeParse({ ...req.body, privyId });
+    if (!parsed.success) {
+      return res.status(400).json({ error: parsed.error.flatten() });
+    }
     return res.json(await resolveIssue(id, parsed.data));
   } catch (err) {
     return res.status(400).json({ error: (err as Error).message });
@@ -178,11 +182,12 @@ app.post("/issues/:id/resolve", async (req: Request, res: Response) => {
 
 app.post("/issues/:id/verify", async (req: Request, res: Response) => {
   const id = routeParam(req, "id");
-  const parsed = issueActionSchema.safeParse(req.body);
-  if (!parsed.success) {
-    return res.status(400).json({ error: parsed.error.flatten() });
-  }
   try {
+    const privyId = await requirePrivyUser(req);
+    const parsed = issueActionSchema.safeParse({ ...req.body, privyId });
+    if (!parsed.success) {
+      return res.status(400).json({ error: parsed.error.flatten() });
+    }
     return res.json(await verifyIssue(id, parsed.data));
   } catch (err) {
     return res.status(400).json({ error: (err as Error).message });

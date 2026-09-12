@@ -13,32 +13,6 @@ const ENVIRONMENTS: { key: Environment; label: string; chain: string }[] = [
   { key: "mainnet", label: "Mainnet", chain: "Ethereum" },
 ];
 
-const SAMPLES: {
-  name: string;
-  address: string;
-  environment: Environment;
-  prompt: string;
-}[] = [
-  {
-    name: "Seaport",
-    address: "0x00000000006c3852cbEf3e08E8dF289169EdE581",
-    environment: "mainnet",
-    prompt: "Order fills, cancellations and counters",
-  },
-  {
-    name: "Uniswap V3 · USDC/ETH",
-    address: "0x88e6A0c2dDD26FEEb64F039a2c41296FcB3f5640",
-    environment: "mainnet",
-    prompt: "Swaps, mints, burns and gas over time",
-  },
-  {
-    name: "WETH9",
-    address: "0xfFf9976782d46CC05630D1f6eBAb18b2324d6B14",
-    environment: "testnet",
-    prompt: "Deposits, withdrawals and transfer volume",
-  },
-];
-
 const ENV_BADGE: Record<Environment, string> = {
   devnet: "env-dev",
   testnet: "env-test",
@@ -112,7 +86,7 @@ export function ConnectScreen() {
             <input
               id="addr"
               className="input mono"
-              placeholder="00000000006c3852cbEf3e08E8dF289169EdE581"
+              placeholder="0000000000000000000000000000000000000000"
               value={address.replace(/^0x/, "")}
               onChange={(e) =>
                 setAddress("0x" + e.target.value.replace(/^0x/, "").trim())
@@ -207,21 +181,10 @@ export function ConnectScreen() {
         </div>
 
         <div className="samples">
-          <span className="samples-label">Try a sample</span>
-          {SAMPLES.map((s) => (
-            <button
-              key={s.address}
-              className="sample-chip"
-              onClick={() => {
-                setAddress(s.address);
-                setEnvironment(s.environment);
-                setPrompt(s.prompt);
-              }}
-            >
-              <span className={`env-dot ${ENV_BADGE[s.environment]}`} />
-              {s.name}
-            </button>
-          ))}
+          <span className="samples-label">
+            Connected contracts and dashboards are loaded from the API after
+            sign-in.
+          </span>
         </div>
       </div>
 

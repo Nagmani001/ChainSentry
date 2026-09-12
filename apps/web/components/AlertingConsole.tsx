@@ -70,19 +70,15 @@ export function AlertingConsole({ mode }: { mode: "alerts" | "issues" }) {
   const [banner, setBanner] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [rule, setRule] = useState({
-    name: "High value movement",
+    name: "",
     contractId: "",
     metric: "total_value_eth",
     operator: ">",
-    threshold: "1",
+    threshold: "",
     windowMin: "15",
     channel: "email" as "email" | "call",
   });
-  const [slot, setSlot] = useState(() => {
-    const start = new Date(Date.now() - 5 * 60_000);
-    const end = new Date(Date.now() + 8 * 60 * 60_000);
-    return { userId: "", startsAt: dtLocal(start), endsAt: dtLocal(end) };
-  });
+  const [slot, setSlot] = useState({ userId: "", startsAt: "", endsAt: "" });
   const [verify, setVerify] = useState({ incentiveWei: "", incentiveTx: "" });
 
   const activeOrg = useMemo(
@@ -113,8 +109,17 @@ export function AlertingConsole({ mode }: { mode: "alerts" | "issues" }) {
 
   useEffect(() => {
     if (!ready || !authenticated) return;
+    if (!slot.startsAt || !slot.endsAt) {
+      const start = new Date(Date.now() - 5 * 60_000);
+      const end = new Date(Date.now() + 8 * 60 * 60_000);
+      setSlot((s) => ({
+        ...s,
+        startsAt: dtLocal(start),
+        endsAt: dtLocal(end),
+      }));
+    }
     load().catch((e) => setBanner((e as Error).message));
-  }, [ready, authenticated, load]);
+  }, [ready, authenticated, load, slot.startsAt, slot.endsAt]);
 
   const withBusy = async (fn: () => Promise<void>) => {
     setBusy(true);
@@ -456,7 +461,13 @@ function AlertsMode(props: {
           </div>
           <button
             className="btn primary"
-            disabled={props.busy || !props.orgId}
+            disabled={
+              props.busy ||
+              !props.orgId ||
+              !props.rule.name.trim() ||
+              !props.rule.contractId ||
+              !props.rule.threshold.trim()
+            }
             onClick={props.createRule}
           >
             Create alert rule

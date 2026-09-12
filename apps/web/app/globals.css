@@ -407,6 +407,37 @@ h1 {
   margin-left: auto;
 }
 
+.auth-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 220px;
+  height: 32px;
+  padding: 0 8px 0 4px;
+  background: transparent;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-ctrl);
+  color: var(--text-2);
+  font-size: 13px;
+}
+.auth-button:hover:not(:disabled) {
+  background: rgba(204, 204, 220, 0.07);
+  color: var(--text);
+}
+.auth-button span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.auth-config-missing {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: var(--canvas);
+}
+
 .kbd {
   font-family: var(--font-mono);
   font-size: 11px;

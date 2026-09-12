@@ -30,7 +30,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} ${robotoMono.variable}`}>
-      <body>
+      <body suppressHydrationWarning>
         <PrivyShell>
           <AppShell>{children}</AppShell>
         </PrivyShell>
