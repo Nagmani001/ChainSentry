@@ -10,6 +10,12 @@ config({ path: resolve(here, "../.env") });
   return this.toString();
 };
 
+const alchemyApiKey = process.env.ALCHEMY_API_KEY?.trim();
+const alchemyUrl = (network: string, fallback: string) =>
+  alchemyApiKey
+    ? `https://${network}.g.alchemy.com/v2/${alchemyApiKey}`
+    : fallback;
+
 export const env = {
   port: Number(process.env.PORT ?? 3001),
   graphApiKey: process.env.GRAPH_API_KEY ?? "",
@@ -21,13 +27,25 @@ export const env = {
   geminiModel: process.env.GEMINI_MODEL ?? "gemini-2.5-flash",
   corsOrigin: process.env.CORS_ORIGIN ?? "*",
   rpc: {
-    mainnet: process.env.RPC_MAINNET ?? "https://ethereum-rpc.publicnode.com",
-    testnet: process.env.RPC_TESTNET ?? "https://ethereum-sepolia-rpc.publicnode.com",
-    devnet: process.env.RPC_DEVNET ?? "https://ethereum-holesky-rpc.publicnode.com",
+    mainnet:
+      process.env.RPC_MAINNET ??
+      alchemyUrl("eth-mainnet", "https://ethereum-rpc.publicnode.com"),
+    testnet:
+      process.env.RPC_TESTNET ??
+      alchemyUrl("eth-sepolia", "https://ethereum-sepolia-rpc.publicnode.com"),
+    devnet:
+      process.env.RPC_DEVNET ??
+      alchemyUrl("eth-holesky", "https://ethereum-holesky-rpc.publicnode.com"),
   },
   traceRpc: {
-    mainnet: process.env.TRACE_RPC_MAINNET ?? "https://eth.drpc.org",
-    testnet: process.env.TRACE_RPC_TESTNET ?? "https://sepolia.drpc.org",
-    devnet: process.env.TRACE_RPC_DEVNET ?? "https://holesky.drpc.org",
+    mainnet:
+      process.env.TRACE_RPC_MAINNET ??
+      alchemyUrl("eth-mainnet", "https://eth.drpc.org"),
+    testnet:
+      process.env.TRACE_RPC_TESTNET ??
+      alchemyUrl("eth-sepolia", "https://sepolia.drpc.org"),
+    devnet:
+      process.env.TRACE_RPC_DEVNET ??
+      alchemyUrl("eth-holesky", "https://holesky.drpc.org"),
   },
 };
