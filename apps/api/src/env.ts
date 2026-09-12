@@ -28,6 +28,8 @@ export const env = {
   gcsProjectId: process.env.GCS_PROJECT_ID ?? "",
   gcsSubgraphBucket: process.env.GCS_SUBGRAPH_BUCKET ?? "",
   gcsPublicBaseUrl: process.env.GCS_PUBLIC_BASE_URL ?? "",
+  gcsServiceAccountKey: process.env.GCS_SERVICE_ACCOUNT_KEY ?? "",
+  gcsServiceAccountKeyBase64: process.env.GCS_SERVICE_ACCOUNT_KEY_BASE64 ?? "",
   ipfsUrl: process.env.IPFS_URL ?? "",
   generatedDir: resolve(here, "../../../generated/subgraphs"),
   geminiApiKey: process.env.GEMINI_API_KEY ?? "",

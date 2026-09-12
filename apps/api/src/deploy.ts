@@ -8,9 +8,15 @@ import { env } from "./env.js";
 import type { GeneratedConfig } from "./configgen.js";
 
 const run = promisify(execFile);
-const storage = new Storage(
-  env.gcsProjectId ? { projectId: env.gcsProjectId } : undefined,
-);
+const gcsCredentials = env.gcsServiceAccountKeyBase64
+  ? JSON.parse(Buffer.from(env.gcsServiceAccountKeyBase64, "base64").toString("utf8"))
+  : env.gcsServiceAccountKey
+    ? JSON.parse(env.gcsServiceAccountKey)
+    : undefined;
+const storage = new Storage({
+  ...(env.gcsProjectId ? { projectId: env.gcsProjectId } : {}),
+  ...(gcsCredentials ? { credentials: gcsCredentials } : {}),
+});
 
 interface ArtifactUpload {
   bucket: string | null;

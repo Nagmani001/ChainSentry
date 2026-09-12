@@ -1,0 +1,74 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: chainsentry-postgres
+    restart: always
+    env_file:
+      - path: .env.backend
+        required: false
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-chainsentry} -d $${POSTGRES_DB:-chainsentry}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.8
+    container_name: chainsentry-clickhouse
+    restart: always
+    env_file:
+      - path: .env.backend
+        required: false
+    environment:
+      - CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT=1
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    volumes:
+      - clickhouse-data:/var/lib/clickhouse
+      - ./config.d:/etc/clickhouse-server/config.d
+      - ./users.d:/etc/clickhouse-server/users.d
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8123/ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  backend:
+    image: ghcr.io/nagmani001/chainsentry/backend:latest
+    container_name: chainsentry-backend
+    restart: always
+    ports:
+      - "3001:3001"
+    env_file:
+      - path: .env.backend
+        required: false
+    depends_on:
+      postgres:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+
+  web:
+    image: ghcr.io/nagmani001/chainsentry/web:latest
+    container_name: chainsentry-web
+    restart: always
+    ports:
+      - "3000:3000"
+    env_file:
+      - path: .env.web
+        required: false
+    depends_on:
+      - backend
+
+volumes:
+  postgres-data:
+  clickhouse-data:
