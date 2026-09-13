@@ -55,6 +55,8 @@ services:
     env_file:
       - path: .env.backend
         required: false
+    volumes:
+      - ./gcs-service-account.json:/app/gcs-service-account.json:ro
     depends_on:
       postgres:
         condition: service_healthy

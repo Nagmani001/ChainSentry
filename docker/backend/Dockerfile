@@ -25,9 +25,12 @@ RUN pnpm --filter api build
 
 FROM base AS runner
 WORKDIR /app
+ENV HOME="/app"
+ENV XDG_CACHE_HOME="/app/.cache"
+ENV NPM_CONFIG_CACHE="/app/.npm"
 RUN addgroup --system --gid 1001 expressjs
 RUN adduser --system --uid 1001 expressjs
 COPY --from=builder --chown=expressjs:expressjs /app .
 USER expressjs
 EXPOSE 3001
-CMD ["sh", "-c", "pnpm --filter @repo/database db:migrate && node apps/api/dist/index.js"]
+CMD ["sh", "-c", "cd packages/database && ./node_modules/.bin/prisma migrate deploy && cd /app && node apps/api/dist/index.js"]
