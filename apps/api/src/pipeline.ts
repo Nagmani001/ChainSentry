@@ -175,7 +175,17 @@ export async function runPipeline(input: PipelineInput): Promise<any> {
   };
 
   let ingestResult = null;
-  if (input.sync) {
+  let returnedJob = job;
+  if (!updatedDeployment.queryUrl) {
+    returnedJob = await prisma.ingestionJob.update({
+      where: { id: job.id },
+      data: {
+        status: "failed",
+        error:
+          "Subgraph artifacts were stored in GCS but no deployed query URL is available for ingestion.",
+      },
+    });
+  } else if (input.sync) {
     ingestResult = await runIngestion();
   } else {
     void runIngestion().catch((err) =>
@@ -186,7 +196,7 @@ export async function runPipeline(input: PipelineInput): Promise<any> {
   return {
     contract,
     deployment: updatedDeployment,
-    job,
+    job: returnedJob,
     chain,
     abiSource: abiResult.source,
     contractName,

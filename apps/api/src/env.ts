@@ -31,7 +31,6 @@ export const env = {
   gcsServiceAccountKey: process.env.GCS_SERVICE_ACCOUNT_KEY ?? "",
   gcsServiceAccountKeyBase64: process.env.GCS_SERVICE_ACCOUNT_KEY_BASE64 ?? "",
   ipfsUrl: process.env.IPFS_URL ?? "",
-  generatedDir: resolve(here, "../../../generated/subgraphs"),
   geminiApiKey: process.env.GEMINI_API_KEY ?? "",
   geminiModel: process.env.GEMINI_MODEL ?? "gemini-2.5-flash",
   corsOrigin: process.env.CORS_ORIGIN ?? "*",

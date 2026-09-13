@@ -30,6 +30,7 @@ ENV XDG_CACHE_HOME="/app/.cache"
 ENV NPM_CONFIG_CACHE="/app/.npm"
 RUN addgroup --system --gid 1001 expressjs
 RUN adduser --system --uid 1001 expressjs
+RUN mkdir -p /app/.cache /app/.npm && chown -R expressjs:expressjs /app/.cache /app/.npm
 COPY --from=builder --chown=expressjs:expressjs /app .
 USER expressjs
 EXPOSE 3001

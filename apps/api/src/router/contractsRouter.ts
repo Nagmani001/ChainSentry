@@ -2,6 +2,7 @@ import { Router, type Request, type Response } from "express";
 import { z } from "zod";
 import { prisma } from "../clients.js";
 import { runPipeline } from "../pipeline.js";
+import { getStoredSubgraphConfig } from "../deploy.js";
 import { queryEvents, queryMetrics } from "../queries.js";
 import { queryString, routeParam } from "../lib/route.js";
 
@@ -79,6 +80,10 @@ contractsRouter.get("/:id/config", async (req: Request, res: Response) => {
     orderBy: { createdAt: "desc" },
   });
   if (!deployment) return res.status(404).json({ error: "no config found" });
+  const storedConfig = await getStoredSubgraphConfig(
+    deployment.artifactBucket,
+    deployment.artifactPrefix,
+  );
   res.json({
     prompt: deployment.prompt,
     eventNames: deployment.eventNames,
@@ -94,9 +99,9 @@ contractsRouter.get("/:id/config", async (req: Request, res: Response) => {
       prefix: deployment.artifactPrefix,
       manifestUrl: deployment.artifactManifestUrl,
     },
-    "subgraph.yaml": deployment.subgraphYaml,
-    "schema.graphql": deployment.schemaGraphql,
-    "mapping.ts": deployment.mappingsTs,
+    "subgraph.yaml": storedConfig?.subgraphYaml ?? deployment.subgraphYaml,
+    "schema.graphql": storedConfig?.schemaGraphql ?? deployment.schemaGraphql,
+    "mapping.ts": storedConfig?.mappingsTs ?? deployment.mappingsTs,
   });
 });
 
