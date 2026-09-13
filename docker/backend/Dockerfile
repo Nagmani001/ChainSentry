@@ -4,6 +4,7 @@ FROM node:${NODE_VERSION}-slim AS base
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PNPM_HOME/bin:$PATH"
 RUN corepack enable && mkdir -p "$PNPM_HOME/bin"
+RUN apt-get update -y && apt-get install -y openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 
 FROM base AS prepare
 WORKDIR /app
@@ -14,6 +15,7 @@ RUN turbo prune api --docker
 
 FROM base AS builder
 WORKDIR /app
+ENV DATABASE_URL="postgres://chainsentry:chainsentry@localhost:5432/chainsentry"
 COPY --from=prepare /app/out/json/ .
 RUN pnpm install
 COPY --from=prepare /app/out/full/ .
