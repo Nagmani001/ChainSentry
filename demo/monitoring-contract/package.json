@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "compile": "hardhat compile",
-    "deploy": "hardhat run scripts/deploy.mjs --network holesky",
-    "traffic": "hardhat run scripts/send-traffic.mjs --network holesky",
-    "incident": "hardhat run scripts/trigger-incident.mjs --network holesky",
+    "deploy": "hardhat run scripts/deploy.mjs --network sepolia",
+    "traffic": "hardhat run scripts/send-traffic.mjs --network sepolia",
+    "incident": "hardhat run scripts/trigger-incident.mjs --network sepolia",
     "evaluate": "node scripts/evaluate-alert.mjs"
   },
   "devDependencies": {

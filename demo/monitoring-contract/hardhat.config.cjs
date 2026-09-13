@@ -14,10 +14,6 @@ module.exports = {
     }
   },
   networks: {
-    holesky: {
-      url: process.env.RPC_URL || "https://ethereum-holesky-rpc.publicnode.com",
-      accounts: privateKey ? [privateKey] : []
-    },
     sepolia: {
       url: process.env.RPC_URL || "https://ethereum-sepolia-rpc.publicnode.com",
       accounts: privateKey ? [privateKey] : []

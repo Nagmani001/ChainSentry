@@ -27,7 +27,7 @@ npm install
 Fill `.env`:
 
 ```bash
-RPC_URL=https://ethereum-holesky-rpc.publicnode.com
+RPC_URL=https://ethereum-sepolia-rpc.publicnode.com
 PRIVATE_KEY=0xYOUR_DEPLOYER_PRIVATE_KEY
 ```
 
@@ -44,7 +44,7 @@ VAULT_ADDRESS=0x...
 DEPENDENCY_ADDRESS=0x...
 ```
 
-Use `VAULT_ADDRESS` in ChainSentry as the contract address. Select `devnet` if you are using Holesky.
+Use `VAULT_ADDRESS` in ChainSentry as the contract address. Select `testnet`, because this demo uses Sepolia.
 
 Good prompt for ChainSentry:
 
