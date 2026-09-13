@@ -1,0 +1,19 @@
+{
+  "name": "chainsentry-monitoring-contract-demo",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "compile": "hardhat compile",
+    "deploy": "hardhat run scripts/deploy.mjs --network holesky",
+    "traffic": "hardhat run scripts/send-traffic.mjs --network holesky",
+    "incident": "hardhat run scripts/trigger-incident.mjs --network holesky",
+    "evaluate": "node scripts/evaluate-alert.mjs"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-ethers": "^3.1.0",
+    "dotenv": "^17.4.2",
+    "ethers": "^6.15.0",
+    "hardhat": "^2.27.0"
+  }
+}
