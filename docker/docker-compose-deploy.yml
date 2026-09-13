@@ -6,6 +6,10 @@ services:
     env_file:
       - path: .env.backend
         required: false
+    environment:
+      - POSTGRES_USER=chainsentry
+      - POSTGRES_PASSWORD=chainsentry
+      - POSTGRES_DB=chainsentry
     ports:
       - "55432:5432"
     volumes:
