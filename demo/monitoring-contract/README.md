@@ -49,7 +49,7 @@ Use `VAULT_ADDRESS` in ChainSentry as the contract address. Select `testnet`, be
 If the UI says the ABI is not verified on Sourcify, register it with the local ABI instead:
 
 ```bash
-CHAINSENTRY_API_URL=https://be.chainsentry.nagmani.site npm run register
+CHAINSENTRY_API_URL=https://be.chainsentry.nagmani.site CHAINSENTRY_CONTRACT_ADDRESS=$VAULT_ADDRESS npm run register
 ```
 
 Then open ChainSentry again. The contract will be in the connected contracts list.

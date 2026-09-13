@@ -2,10 +2,12 @@ import "dotenv/config";
 import { readFile } from "node:fs/promises";
 
 const apiUrl = process.env.CHAINSENTRY_API_URL;
-const address = process.env.CHAINSENTRY_CONTRACT_ADDRESS || process.env.VAULT_ADDRESS;
+const address = (process.env.CHAINSENTRY_CONTRACT_ADDRESS || process.env.VAULT_ADDRESS || "").trim();
 
 if (!apiUrl) throw new Error("CHAINSENTRY_API_URL is required");
-if (!address) throw new Error("CHAINSENTRY_CONTRACT_ADDRESS or VAULT_ADDRESS is required");
+if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
+  throw new Error("Set CHAINSENTRY_CONTRACT_ADDRESS or VAULT_ADDRESS to the deployed SentryDemoVault address");
+}
 
 const artifact = JSON.parse(
   await readFile("artifacts/contracts/SentryDemoVault.sol/SentryDemoVault.json", "utf8")
