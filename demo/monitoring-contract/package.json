@@ -6,6 +6,7 @@
   "scripts": {
     "compile": "hardhat compile",
     "deploy": "hardhat run scripts/deploy.mjs --network sepolia",
+    "register": "node scripts/register-contract.mjs",
     "traffic": "hardhat run scripts/send-traffic.mjs --network sepolia",
     "incident": "hardhat run scripts/trigger-incident.mjs --network sepolia",
     "evaluate": "node scripts/evaluate-alert.mjs"
