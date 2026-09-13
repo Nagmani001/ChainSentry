@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { usePrivy } from "@privy-io/react-auth";
+import Image from "next/image";
 import { api, setAuthTokenGetter } from "../lib/api";
 import { Icon } from "./Icon";
 
@@ -48,6 +49,9 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
       <div className="alert-page auth-gate">
         <section className="alert-hero">
           <div>
+            <span className="auth-logo-mark">
+              <Image src="/logo.png" alt="" width={38} height={38} priority />
+            </span>
             <h1>Sign in to ChainSentry</h1>
             <p>
               ChainSentry reads live Graph-indexed telemetry and org data from

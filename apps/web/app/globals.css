@@ -150,7 +150,19 @@ h1 {
 .brand-mark {
   display: grid;
   place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius);
+  background: var(--panel);
+  overflow: hidden;
   flex: none;
+}
+.brand-logo {
+  display: block;
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
 }
 .brand-name {
   font-weight: 600;
@@ -1491,7 +1503,29 @@ h1 {
   padding: 28px;
 }
 .connect-header {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  column-gap: 12px;
+  align-items: start;
   margin-bottom: 24px;
+}
+.connect-logo-mark,
+.auth-logo-mark {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--border-medium);
+  border-radius: 6px;
+  background: var(--input-bg);
+  overflow: hidden;
+}
+.connect-logo-mark img,
+.auth-logo-mark img {
+  display: block;
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
 }
 .connect-title {
   font-size: 24px;
@@ -1500,6 +1534,7 @@ h1 {
   margin-bottom: 8px;
 }
 .connect-sub {
+  grid-column: 2;
   color: var(--text-2);
   font-size: 14px;
   line-height: 1.6;
@@ -1952,6 +1987,15 @@ h1 {
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: var(--radius);
+}
+.alert-page.auth-gate .alert-hero > div:first-child {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  column-gap: 12px;
+  align-items: start;
+}
+.alert-page.auth-gate .alert-hero .auth-logo-mark + h1 + p {
+  grid-column: 2;
 }
 .alert-hero p {
   margin: 5px 0 0;

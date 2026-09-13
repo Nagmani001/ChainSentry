@@ -21,6 +21,24 @@ const robotoMono = Roboto_Mono({
 export const metadata: Metadata = {
   title: "ChainSentry",
   description: "Observability for smart contracts — logs, metrics and traces.",
+  icons: {
+    icon: [
+      { url: "/icon.png", type: "image/png" },
+      { url: "/logo.png", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-icon.png", type: "image/png" }],
+  },
+  openGraph: {
+    title: "ChainSentry",
+    description: "Observability for smart contracts — logs, metrics and traces.",
+    images: [{ url: "/opengraph-image.png", type: "image/png" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "ChainSentry",
+    description: "Observability for smart contracts — logs, metrics and traces.",
+    images: ["/opengraph-image.png"],
+  },
 };
 
 export default function RootLayout({

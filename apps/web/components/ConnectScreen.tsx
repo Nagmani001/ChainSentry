@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { api } from "../lib/api";
@@ -69,6 +70,9 @@ export function ConnectScreen() {
     <div className="connect">
       <div className="connect-panel">
         <div className="connect-header">
+          <span className="connect-logo-mark">
+            <Image src="/logo.png" alt="" width={40} height={40} priority />
+          </span>
           <h1 className="connect-title">Connect a contract</h1>
           <p className="connect-sub">
             Point ChainSentry at any deployed contract. It fetches the ABI,

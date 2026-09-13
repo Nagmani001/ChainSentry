@@ -28,7 +28,7 @@ export function PrivyShell({ children }: { children: React.ReactNode }) {
         appearance: {
           theme: "dark",
           accentColor: "#3d71d9",
-          logo: undefined,
+          logo: "/logo.png",
         },
       }}
     >

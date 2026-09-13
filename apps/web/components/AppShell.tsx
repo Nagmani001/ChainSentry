@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Icon, type IconName } from "./Icon";
@@ -74,34 +75,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="nav-brand">
           <Link href="/" className="brand" aria-label="ChainSentry home">
             <span className="brand-mark">
-              <svg
-                viewBox="0 0 32 32"
-                width="26"
-                height="26"
-                aria-hidden="true"
-              >
-                <defs>
-                  <linearGradient id="cs-mark" x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0" stopColor="#ff9830" />
-                    <stop offset="1" stopColor="#f2495c" />
-                  </linearGradient>
-                </defs>
-                <path
-                  d="M16 3l11 6v7c0 6.6-4.5 11.7-11 13-6.5-1.3-11-6.4-11-13V9z"
-                  fill="none"
-                  stroke="url(#cs-mark)"
-                  strokeWidth="2.2"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M11 16.5l3.2 3.2L21 12.5"
-                  fill="none"
-                  stroke="url(#cs-mark)"
-                  strokeWidth="2.2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+              <Image
+                src="/logo.png"
+                alt=""
+                width={28}
+                height={28}
+                priority
+                className="brand-logo"
+              />
             </span>
             <span className="brand-name">ChainSentry</span>
           </Link>
