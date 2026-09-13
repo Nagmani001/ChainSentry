@@ -55,6 +55,11 @@ services:
     env_file:
       - path: .env.backend
         required: false
+    environment:
+      - HOME=/app
+      - XDG_CACHE_HOME=/app/.cache
+      - NPM_CONFIG_CACHE=/app/.npm
+    command: ["sh", "-c", "cd packages/database && ./node_modules/.bin/prisma migrate deploy && cd /app && node apps/api/dist/index.js"]
     volumes:
       - ./gcs-service-account.json:/app/gcs-service-account.json:ro
     depends_on:
